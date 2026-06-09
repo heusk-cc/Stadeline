@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCSA Academy - Contact Support</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Poppins:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background-color: var(--bg-light);">
+
+    <!-- SHARED NAVIGATION TERMINAL BANNER -->
+    <nav class="navbar">
+        <a href="index.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> DCSA ACADEMY</a>
+        <div class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="strands.html">Strands</a></li>
+            <li><a href="about.html">About & Lore</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="login.html">Sign In</a></li>
+            <li><a href="register.html" class="nav-btn">Enroll Now</a></li>
+        </ul>
+    </nav>
+
+    <div class="form-view-wrapper">
+        <div class="form-panel">
+            <h2>Contact Support</h2>
+            <p class="panel-sub">File a direct ticket to server moderators</p>
+            
+            <form onsubmit="handleMockSubmit(event, 'Support ticket sent successfully. Watch for an inbox notification on Discord.');">
+                <div class="form-group">
+                    <label>Discord Handle</label>
+                    <div class="input-container">
+                        <i class="fa-brands fa-discord"></i>
+                        <input type="text" placeholder="username#0000" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Inquiry Classification</label>
+                    <div class="input-container">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <select required>
+                            <option value="" disabled selected>Choose ticket division...</option>
+                            <option value="admission">Admission Verification Error</option>
+                            <option value="faction">Faction Dispute</option>
+                            <option value="bug">Economy Bug Report</option>
+                            <option value="other">General Question</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Inquiry Message</label>
+                    <div class="input-container">
+                        <textarea rows="4" placeholder="Detail your operational or structural inquiry here..." required></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="form-action-btn">Transmit Ticket</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js" defer></script>
+</body>
+</html>

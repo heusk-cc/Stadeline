@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCSA Academy - Enrollment Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Poppins:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="form-view-wrapper" style="padding-top: 40px;">
+        <div class="form-panel">
+            <h2>Enrollment Form</h2>
+            <p class="panel-sub">S.Y. 2026-2027 Registration Document</p>
+            
+            <form onsubmit="handleMockSubmit(event, 'Application filed. Stand by for registrar evaluation inside Discord.');">
+                <div class="form-group">
+                    <label>Discord Identity</label>
+                    <div class="input-container">
+                        <i class="fa-brands fa-discord"></i>
+                        <input type="text" placeholder="username (e.g., roleplayer_01)" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Character Full Name</label>
+                    <div class="input-container">
+                        <i class="fa-solid fa-signature"></i>
+                        <input type="text" placeholder="Firstname Lastname" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Academic Track Target</label>
+                    <div class="input-container">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <select required>
+                            <option value="" disabled selected>Select Track Designation</option>
+                            <option value="stem">STEM (Science & Tech Division)</option>
+                            <option value="abm">ABM (Business & Financing)</option>
+                            <option value="humss">HUMSS (Legal & Public Service)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Secure Account Password</label>
+                    <div class="input-container">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="password" placeholder="Create unique password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="form-action-btn">File Application</button>
+            </form>
+
+            <div class="panel-footer-links">
+                Already registered? <a href="login.html">Access Portal</a>
+                <br><br>
+                <a href="index.html" style="color: var(--muted-gray);"><i class="fa-solid fa-arrow-left"></i> Back to Main Terminal</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js" defer></script>
+</body>
+</html>
