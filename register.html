@@ -7,9 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Poppins:wght=400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        .portal-header-logo { display: block; height: 65px; width: 65px; margin: 0 auto 15px auto; border-radius: 50%; object-fit: contain; }
-    </style>
+    <link rel="stylesheet" href="css/portal.css">
 </head>
 <body>
   
@@ -37,18 +35,18 @@
             
             <form onsubmit="handleRegistrationSubmit(event)">
                 <div class="form-group">
-                    <label>Applicant Discord Username</label>
+                    <label>Full Applicant Name</label>
                     <div class="input-container">
-                        <i class="fa-solid fa-user-graduate"></i>
-                        <input type="text" placeholder="Juan Dela Cruz" required>
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="regFullName" placeholder="Juan Dela Cruz" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Discord ID</label>
+                    <label>Active Email Address</label>
                     <div class="input-container">
-                        <i class="fa-solid fa-hashtag"></i>
-                        <input type="text" maxlength="4" placeholder="1234" required>
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="regEmail" placeholder="example@domain.com" required>
                     </div>
                 </div>
 
@@ -56,30 +54,19 @@
                     <label>Academic Track Program</label>
                     <div class="input-container">
                         <i class="fa-solid fa-graduation-cap"></i>
-                        <select required>
-    <option value="" disabled selected>Select SHS Strand</option>
-    
-    <optgroup label="Academic Track">
-        <option value="stem">STEM (Science & Tech)</option>
-        <option value="abm">ABM (Business & Accountancy)</option>
-        <option value="humss">HUMSS (Social Sciences)</option>
-        <option value="gas">GAS (General Academic)</option>
-    </optgroup>
-    
-    <optgroup label="Technical-Vocational-Livelihood (TVL) Track">
-        <option value="he">HE (Home Economics)</option>
-        <option value="ict">ICT (Information & Communications Tech)</option>
-    </optgroup>
-</select>
-
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Create Password</label>
-                    <div class="input-container">
-                        <i class="fa-solid fa-key"></i>
-                        <input type="password" placeholder="Create a password for your portal access" required>
+                        <select id="regTrack" required>
+                            <option value="" disabled selected>Select SHS Strand</option>
+                            <optgroup label="Academic Track">
+                                <option value="stem">STEM (Science & Tech)</option>
+                                <option value="abm">ABM (Business & Accountancy)</option>
+                                <option value="humss">HUMSS (Social Sciences)</option>
+                                <option value="gas">GAS (General Academic)</option>
+                            </optgroup>
+                            <optgroup label="Technical-Vocational-Livelihood (TVL) Track">
+                                <option value="he">HE (Home Economics)</option>
+                                <option value="ict">ICT (Information & Communications Tech)</option>
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
 
@@ -94,6 +81,10 @@
         </div>
     </div>
 
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript"> (function(){ emailjs.init("DDVLZbYjEeonKEVG2"); })(); </script>
+
     <script src="js/main.js" defer></script>
+    <script type="module" src="js/register.js"></script>
 </body>
 </html>

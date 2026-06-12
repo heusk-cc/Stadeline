@@ -7,14 +7,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Poppins:wght=400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Embedded helper to size the portal card icon smoothly */
-        .portal-header-logo { display: block; height: 65px; width: 65px; margin: 0 auto 15px auto; border-radius: 50%; object-fit: contain; }
-    </style>
+    <link rel="stylesheet" href="css/portal.css">
 </head>
 <body>
   
-      <nav class="navbar">
+    <nav class="navbar">
         <a href="index.html" class="nav-logo">
             <img src="assets/logo.jpg" alt="Datamex College of Saint Adeline Logo">
             <span>DATAMEX COLLEGE OF SAINT ADELINE</span>
@@ -36,13 +33,12 @@
             <h2>Student SIS Portal</h2>
             <p class="panel-sub">Access your institutional academic grades and records</p>
             
-            <!-- Inside login.html, modify the opening <form> tag to point to our validation bridge: -->
-<form onsubmit="handlePortalLogin(event)">
+            <form onsubmit="handlePortalLogin(event)">
                 <div class="form-group">
                     <label>Student ID Number</label>
                     <div class="input-container">
                         <i class="fa-solid fa-id-card"></i>
-                        <input type="text" placeholder="2026-XXXX-FV" required>
+                        <input type="text" id="loginStudentId" placeholder="DCSA-AXXXX-2627" required>
                     </div>
                 </div>
 
@@ -50,7 +46,7 @@
                     <label>Portal Password</label>
                     <div class="input-container">
                         <i class="fa-solid fa-lock"></i>
-                        <input type="password" placeholder="••••••••" required>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required>
                     </div>
                 </div>
 
@@ -61,38 +57,15 @@
                 Incoming student? <a href="register.html">Apply through online admission</a>
                 <br><br>
                 <a href="index.html" style="color: var(--muted-gray);"><i class="fa-solid fa-arrow-left"></i> Home Page</a>
+                <br><br>
+                <a href="admin-login.html" style="color: #cbd5e1; text-decoration: none; font-size: 11px; display: inline-block; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'">
+                    System Administration Access
+                </a>
             </div>
         </div>
     </div>
 
-<script>
-    function handlePortalLogin(event) {
-        event.preventDefault();
-        const inputs = event.target.querySelectorAll("input");
-        
-        const typedId = inputs[0].value.trim();       // Student ID input field
-        const typedPassword = inputs[1].value.trim(); // Password input field
-
-        // Read the live active database straight out of browser memory
-        const liveDatabase = JSON.parse(localStorage.getItem("dcsa_local_db")) || {};
-
-        // Look up if the entered Student ID key exists inside the object map
-        if (liveDatabase[typedId]) {
-            const currentStudent = liveDatabase[typedId];
-
-            // Verify if their matching password parameters are correct
-            if (currentStudent.password === typedPassword) {
-                // Save this specific user profile into the active temporary browser window session
-                sessionStorage.setItem("active_student_session", JSON.stringify(currentStudent));
-                window.location.href = "dashboard.html";
-                return;
-            }
-        }
-        
-        alert("Authentication Denied.\n\nInvalid ID or Password.\nTry: DCSA-001-FV with password123\nOr use a newly registered ID.");
-    }
-</script>
-
     <script src="js/main.js" defer></script>
+    <script type="module" src="js/login.js"></script>
 </body>
 </html>

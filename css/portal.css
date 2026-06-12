@@ -1,0 +1,215 @@
+/* ==========================================================================
+   DCSA SYSTEM WEB PORTAL SUPPLEMENTAL DESIGN SHEET (css/portal.css)
+   ========================================================================== */
+
+/* Shared Portal Form Components */
+.portal-header-logo { 
+    display: block; 
+    height: 65px; 
+    width: 65px; 
+    margin: 0 auto 15px auto; 
+    border-radius: 50%; 
+    object-fit: contain; 
+}
+
+/* Dashboard Grid Architecture layout */
+.db-layout { 
+    display: grid; 
+    grid-template-columns: 260px 1fr; 
+    min-height: 100vh; 
+    background: #f1f5f9; 
+    padding-top: 0; 
+}
+
+.db-sidebar { 
+    background: var(--deep-blue); 
+    color: var(--text-light); 
+    padding: 30px 20px; 
+    display: flex; 
+    flex-direction: column; 
+    border-right: 4px solid var(--crimson-red); 
+}
+
+.db-brand { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    font-family: var(--font-display); 
+    font-size: 1.2rem; 
+    margin-bottom: 40px; 
+    padding-bottom: 20px; 
+    border-bottom: 1px solid rgba(255,255,255,0.1); 
+}
+
+.db-brand img { 
+    height: 35px; 
+    width: 35px; 
+}
+
+.db-menu { 
+    list-style: none; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    flex-grow: 1; 
+}
+
+.db-menu-btn { 
+    width: 100%; 
+    padding: 12px 15px; 
+    background: transparent; 
+    border: none; 
+    color: #94a3b8; 
+    text-align: left; 
+    font-family: var(--font-display); 
+    text-transform: uppercase; 
+    font-size: 0.95rem; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    transition: var(--transition); 
+}
+
+.db-menu-btn:hover, .db-menu-btn.active { 
+    background: rgba(255,255,255,0.05); 
+    color: var(--text-light); 
+}
+
+.db-menu-btn.active { 
+    border-left: 4px solid var(--bright-red); 
+    border-radius: 0 4px 4px 0; 
+    color: #fff; 
+}
+
+.db-logout { 
+    background: rgba(139, 20, 22, 0.1); 
+    color: #ef4444; 
+    margin-top: auto; 
+}
+
+.db-logout:hover { 
+    background: var(--crimson-red); 
+    color: var(--text-light); 
+}
+
+.db-viewport { 
+    padding: 40px 5%; 
+    height: 100vh; 
+    overflow-y: auto; 
+}
+
+.db-header-card { 
+    background: var(--card-bg); 
+    padding: 25px; 
+    border-radius: 6px; 
+    box-shadow: var(--shadow); 
+    margin-bottom: 30px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+
+.db-view-panel { 
+    display: none; 
+}
+
+.db-view-panel.active-panel { 
+    display: block; 
+}
+
+/* Analytical Metrics Matrix & Portal Grade Tables */
+.info-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    gap: 20px; 
+    margin-bottom: 30px; 
+}
+
+.metric-card { 
+    background: var(--card-bg); 
+    padding: 25px; 
+    border-radius: 6px; 
+    box-shadow: var(--shadow); 
+    border-left: 4px solid var(--deep-blue); 
+}
+
+.metric-card.accent { 
+    border-left-color: var(--bright-red); 
+}
+
+.metric-card h3 { 
+    font-family: var(--font-display); 
+    font-size: 0.9rem; 
+    color: var(--muted-gray); 
+    text-transform: uppercase; 
+    margin-bottom: 5px; 
+}
+
+.metric-card p { 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    color: var(--deep-blue); 
+}
+
+.data-table-frame { 
+    background: var(--card-bg); 
+    border-radius: 6px; 
+    box-shadow: var(--shadow); 
+    overflow: hidden; 
+    margin-top: 15px; 
+}
+
+.portal-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    text-align: left; 
+    font-size: 0.95rem; 
+}
+
+.portal-table th { 
+    background: var(--deep-blue); 
+    color: var(--text-light); 
+    font-family: var(--font-display); 
+    text-transform: uppercase; 
+    padding: 14px 20px; 
+    font-weight: 500; 
+    font-size: 0.85rem; 
+    letter-spacing: 0.5px; 
+}
+
+.portal-table td { 
+    padding: 14px 20px; 
+    border-bottom: 1px solid #e2e8f0; 
+    color: #334155; 
+}
+
+.portal-table tr:last-child td { 
+    border-bottom: none; 
+}
+
+.portal-table tr:nth-child(even) { 
+    background-color: #f8fafc; 
+}
+
+.badge-pass { 
+    background: #dcfce7; 
+    color: #15803d; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-weight: 600; 
+    font-size: 0.8rem; 
+}
+
+/* Responsive Structural Constraints */
+@media (max-width: 768px) {
+    .db-layout { grid-template-columns: 1fr; }
+    .db-sidebar { height: auto; border-right: none; border-bottom: 3px solid var(--crimson-red); padding: 15px; }
+    .db-brand { margin-bottom: 15px; padding-bottom: 0; border-bottom: none; }
+    .db-menu { flex-direction: row; flex-wrap: wrap; gap: 5px; }
+    .db-menu-btn { width: auto; padding: 8px 12px; font-size: 0.8rem; }
+    .db-logout { margin-top: 0; }
+    .db-viewport { height: auto; padding-top: 20px; }
+    .db-header-card { flex-direction: column; text-align: center; gap: 10px; }
+}

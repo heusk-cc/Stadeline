@@ -1,102 +1,124 @@
-/**
- * DCSA Fairview Student Portal Application Data Engine
- */
-document.addEventListener("DOMContentLoaded", () => {
-    verifySessionGuard();
-    populateDashboardMetrics();
+import { db } from "./firebase-config.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Ensure the student is logged in, grab their authentication token string
+const activeStudentId = sessionStorage.getItem("loggedStudentId");
+
+if (!activeStudentId) {
+    alert("Authentication Failure:\nNo active session detected. Returning to login panel.");
+    window.location.href = "login.html";
+}
+
+// Automatically initialize workspace data compilation on window launch
+window.addEventListener("DOMContentLoaded", () => {
+    loadStudentDashboardMetrics();
 });
 
-/**
- * 1. SECURITY SESSION GUARD
- * Blocks users who try to load the dashboard without authenticating first
- */
-function verifySessionGuard() {
-    const sessionToken = sessionStorage.getItem("active_student_session");
-    
-    if (!sessionToken) {
-        alert("Unauthorized Access Attempt.\n Please login to access the Student Portal.");
-        window.location.href = "login.html";
+async function loadStudentDashboardMetrics() {
+    try {
+        const studentDocRef = doc(db, "students", activeStudentId);
+        const docSnap = await getDoc(studentDocRef);
+
+        if (!docSnap.exists()) {
+            alert("Database Error: Profile document missing from system registry registry.");
+            handleLogout();
+            return;
+        }
+
+        const data = docSnap.data();
+
+        // 1. Populate Profile Identity Node Values
+        document.getElementById("studentName").textContent = data.username || "Not Specified";
+        document.getElementById("studentId").textContent = data.studentId || activeStudentId;
+        document.getElementById("studentTrack").textContent = (data.track || "Unassigned").toUpperCase();
+        document.getElementById("studentStatus").textContent = data.enrollmentStatus || "PENDING APPLICATION";
+
+        // 2. Compile and Render Academic Report Card Row Nodes
+        const reportCardTableBody = document.getElementById("reportCardContent");
+        if (reportCardTableBody) {
+            reportCardTableBody.innerHTML = ""; // Wipe loading spacer text
+
+            if (data.grades && Object.keys(data.grades).length > 0) {
+                for (const [subject, grade] of Object.entries(data.grades)) {
+                    // Check if grade value is empty, null, or set to "N/A"
+                    const isUngraded = (grade === "N/A" || !grade);
+                    const gradeDisplay = isUngraded ? "Not Graded" : grade;
+                    const gradeStyle = isUngraded 
+                        ? "color: #94a3b8; font-style: italic; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; display: inline-block;" 
+                        : "color: #0f172a; font-weight: bold; background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 4px; display: inline-block;";
+
+                    reportCardTableBody.innerHTML += `
+                        <tr>
+                            <td style="font-weight: 500;">${subject}</td>
+                            <td style="text-align: center;"><span style="${gradeStyle}">${gradeDisplay}</span></td>
+                        </tr>
+                    `;
+                }
+            } else {
+                reportCardTableBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #94a3b8;">No academic courses assigned to this record profile.</td></tr>`;
+            }
+        }
+
+        // 3. Compile and Render Schedule Matrix Blocks
+        const scheduleContainer = document.getElementById("scheduleContent");
+        if (scheduleContainer) {
+            scheduleContainer.innerHTML = ""; // Wipe loading block
+
+            if (data.schedule && Object.keys(data.schedule).length > 0) {
+                for (const [day, executionTime] of Object.entries(data.schedule)) {
+                    scheduleContainer.innerHTML += `
+                        <div class="schedule-row">
+                            <strong style="color: #0f172a; display: inline-block; width: 100px;">${day}:</strong>
+                            <span style="color: #475569; font-size: 14px;">${executionTime}</span>
+                        </div>
+                    `;
+                }
+            } else {
+                scheduleContainer.innerHTML = `<p style="color: #94a3b8; font-style: italic;">No class scheduling matrix has been established for this block profile.</p>`;
+            }
+        }
+
+    } catch (err) {
+        console.error("Failed to accurately read student metric collection profiles: ", err);
+        alert("Data Connection Refused: Unable to completely fetch server matrices.");
     }
 }
 
-/**
- * 2. CORE RENDERING ENGINE
- * Maps session database fields onto interface components
- */
-function populateDashboardMetrics() {
-    const sessionToken = sessionStorage.getItem("active_student_session");
-    if (!sessionToken) return;
+// 4. Handle Password Updates Securely
+window.updatePortalPassword = async function(event) {
+    event.preventDefault();
 
-    const student = JSON.parse(sessionToken);
+    const newPass = document.getElementById("newPassword").value.trim();
+    const confirmPass = document.getElementById("confirmPassword").value.trim();
 
-    // Render Text Headers
-    document.getElementById("welcomeUser").innerText = `Welcome, ${student.fullName}!`;
-    document.getElementById("studentIdBadge").innerText = student.idNumber;
-    document.getElementById("trackMetric").innerText = student.academicTrack.split(" ")[0] + " Track";
-    
-    // Render Complete Profile Fields Table
-    document.getElementById("profName").innerText = student.fullName;
-    document.getElementById("profId").innerText = student.idNumber;
-    document.getElementById("profLrn").innerText = student.lrn;
-    document.getElementById("profTrack").innerText = student.academicTrack;
-
-    // DATA MOCK LEDGER FOR SHS GRADES RECORD MATRIX
-    const academicGradesRecord = [
-        { subject: "General Mathematics", midterm: 1.25, final: 1.00 },
-        { subject: "Earth and Life Science", midterm: 1.50, final: 1.25 },
-        { subject: "Oral Communication in Context", midterm: 1.75, final: 1.50 },
-        { subject: "Introduction to World Religions", midterm: 1.25, final: 1.25 },
-        { subject: "Empowerment Technologies (ICT)", midterm: 1.00, final: 1.00 },
-        { subject: "Physical Education and Health 1", midterm: 1.25, final: 1.25 }
-    ];
-
-    const tableBody = document.getElementById("gradesTableBody");
-    let totalScoreAccumulator = 0;
-    tableBody.innerHTML = ""; // Wipe fallbacks
-
-    academicGradesRecord.forEach(row => {
-        const rowAverage = (row.midterm + row.final) / 2;
-        totalScoreAccumulator += rowAverage;
-
-        const tableRowElement = document.createElement("tr");
-        tableRowElement.innerHTML = `
-            <td style="font-weight: 500; color: var(--deep-blue);">${row.subject}</td>
-            <td>${row.midterm.toFixed(2)}</td>
-            <td>${row.final.toFixed(2)}</td>
-            <td style="font-weight: 600;">${rowAverage.toFixed(2)}</td>
-            <td><span class="badge-pass">PASSED</span></td>
-        `;
-        tableBody.appendChild(tableRowElement);
-    });
-
-    // Compute Overall General Weighted Average Metric
-    const finalCalculatedGwa = totalScoreAccumulator / academicGradesRecord.length;
-    document.getElementById("gwaMetric").innerText = finalCalculatedGwa.toFixed(2);
-}
-
-/**
- * 3. INTERACTIVE CONTAINER VIEW TOOGLE TABS SWITCHER
- */
-function switchPanel(panelId, eventButton) {
-    // Hide all viewpanels
-    const viewPanels = document.querySelectorAll(".db-view-panel");
-    viewPanels.forEach(panel => panel.classList.remove("active-panel"));
-
-    // Deactivate all navigation panel buttons
-    const navigationButtons = document.querySelectorAll(".db-menu-btn");
-    navigationButtons.forEach(btn => btn.classList.remove("active"));
-
-    // Activate selected elements
-    document.getElementById(`panel-${panelId}`).classList.add("active-panel");
-    eventButton.classList.add("active");
-}
-
-/**
- * 4. SYSTEM SESSION TERMINATOR
- */
-function handlePortalLogout() {
-    if (confirm("Are you sure you want to securely log out of the SIS Portal?")) {
-        sessionStorage.removeItem("active_student_session");
-        window.location.href = "login.html";
+    if (newPass.length < 6) {
+        alert("Security Standard Rejection:\nPassword strings must contain at least 6 characters.");
+        return;
     }
-}
+
+    if (newPass !== confirmPass) {
+        alert("Typo Detected:\nPasswords do not match. Please verify string values.");
+        return;
+    }
+
+    try {
+        const studentDocRef = doc(db, "students", activeStudentId);
+        
+        await updateDoc(studentDocRef, {
+            password: newPass
+        });
+
+        alert("Database Sync Complete:\nYour account access portal key has been altered successfully.");
+        document.getElementById("passwordChangeForm").reset();
+
+    } catch (err) {
+        console.error("Cloud document transaction failure: ", err);
+        alert("Authentication write access rejected by Cloud permission layers.");
+    }
+};
+
+// 5. App Logout Session Invalidation Control 
+window.handleLogout = function() {
+    sessionStorage.removeItem("loggedStudentId");
+    window.location.href = "login.html";
+};

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DCSA SIS - Administrative Management Desk</title>
+    <link rel="stylesheet" href="css/style.css"> 
+</head>
+<body style="background-color: #f1f5f9; font-family: system-ui, sans-serif; margin: 0; padding-bottom: 40px;">
+
+    <!-- Banner Section -->
+    <header style="background: #0f172a; color: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #8b1416;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="assets/logo.jpg" alt="DCSA Logo" style="height: 50px; width: 50px; border-radius: 50%;">
+            <h1 style="margin: 0; font-size: 20px; letter-spacing: 1px;">DCSA | ADMIN PORTAL</h1>
+        </div>
+        <button onclick="logoutAdmin()" style="background: #8b1416; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">LOG OUT</button>
+    </header>
+
+    <div style="max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        <h2 style="color: #0f172a; border-bottom: 3px solid #8b1416; padding-bottom: 10px; text-transform: uppercase;">
+            Account Registry Control Panel
+        </h2>
+
+        <div style="margin: 20px 0; display: flex; gap: 10px;">
+            <input type="text" id="searchStudentId" placeholder="Enter Student ID (e.g., DCSA-A1234-2627)" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+            <button onclick="searchStudentProfile()" style="background: #0f172a; color: white; padding: 0 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Search Record</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0;">
+
+        <form id="adminEditForm" style="display: none;" onsubmit="updateStudentProfile(event)">
+            <h3 style="color: #8b1416; margin-bottom: 20px;">Account File Customization</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Full Applicant Name</label>
+                    <input type="text" id="adminStudentName" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;" required>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Account Web Password</label>
+                    <input type="text" id="adminStudentPassword" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;" required>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Registered Email Desk</label>
+                    <input type="email" id="adminStudentEmail" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;" required>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Admissions Processing Status</label>
+                    <select id="adminStudentStatus" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; background: #fff;">
+                        <option value="PENDING APPLICATION">PENDING APPLICATION</option>
+                        <option value="OFFICIALLY ENROLLED">OFFICIALLY ENROLLED</option>
+                        <option value="REJECTED / INCOMPLETE">REJECTED / INCOMPLETE</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" style="background: #8b1416; color: white; width: 100%; padding: 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Save Changes & Commit To Cloud
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Logout functionality to clear admin session
+        function logoutAdmin() {
+            sessionStorage.removeItem("adminAuthenticated");
+            window.location.href = "admin-login.html";
+        }
+
+        // Security check: Redirect to admin-login.html if not authenticated
+        if (sessionStorage.getItem("adminAuthenticated") !== "true") {
+            window.location.href = "admin-login.html";
+        }
+    </script>
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
