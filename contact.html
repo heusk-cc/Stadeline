@@ -3,63 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DCSA Academy - Contact Support</title>
+    <title>Contact DCSA Admissions</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Poppins:wght=400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body style="background-color: var(--bg-light);">
+<body>
 
-    <!-- SHARED NAVIGATION TERMINAL BANNER -->
     <nav class="navbar">
-        <a href="index.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> DCSA ACADEMY</a>
+        <a href="index.html" class="nav-logo">
+            <img src="assets/logo.jpg" alt="Datamex College of Saint Adeline Logo">
+            <span>DATAMEX COLLEGE OF SAINT ADELINE</span>
+        </a>
         <div class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></div>
         <ul class="nav-links" id="navLinks">
             <li><a href="index.html">Home</a></li>
-            <li><a href="strands.html">Strands</a></li>
-            <li><a href="about.html">About & Lore</a></li>
-            <li><a href="contact.html">Contact</a></li>
-            <li><a href="login.html">Sign In</a></li>
-            <li><a href="register.html" class="nav-btn">Enroll Now</a></li>
+            <li><a href="strands.html">Programs</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Admissions</a></li>
+            <li><a href="login.html">SIS Portal</a></li>
+            <li><a href="register.html" class="nav-btn">Enroll Online</a></li>
         </ul>
     </nav>
 
     <div class="form-view-wrapper">
         <div class="form-panel">
-            <h2>Contact Support</h2>
-            <p class="panel-sub">File a direct ticket to server moderators</p>
+            <h2>Contact Admissions</h2>
+            <p class="panel-sub">Reach out to our campus registrar for enrollment assistance</p>
             
-            <form onsubmit="handleMockSubmit(event, 'Support ticket sent successfully. Watch for an inbox notification on Discord.');">
+            <!-- Updated action and method to connect to Web3Forms -->
+            <form action="https://api.web3forms.com/submit" method="POST">
+                
+                <!-- Your Web3Forms Access Key -->
+                <input type="hidden" name="access_key" value="90c04940-a4cf-4126-b717-ddd71154e0bb">
+                
+                <!-- Sets the subject line of the email you will receive -->
+                <input type="hidden" name="subject" value="New Admissions Inquiry - Datamex">
+
                 <div class="form-group">
-                    <label>Discord Handle</label>
+                    <label>Full Name</label>
                     <div class="input-container">
-                        <i class="fa-brands fa-discord"></i>
-                        <input type="text" placeholder="username#0000" required>
+                        <i class="fa-solid fa-user"></i>
+                        <!-- Added name="name" -->
+                        <input type="text" name="name" placeholder="John Doe" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Inquiry Classification</label>
+                    <label>Active Email Address</label>
                     <div class="input-container">
-                        <i class="fa-solid fa-circle-info"></i>
-                        <select required>
-                            <option value="" disabled selected>Choose ticket division...</option>
-                            <option value="admission">Admission Verification Error</option>
-                            <option value="faction">Faction Dispute</option>
-                            <option value="bug">Economy Bug Report</option>
-                            <option value="other">General Question</option>
-                        </select>
+                        <i class="fa-solid fa-envelope"></i>
+                        <!-- Added name="email" -->
+                        <input type="email" name="email" placeholder="example@domain.com" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Inquiry Message</label>
                     <div class="input-container">
-                        <textarea rows="4" placeholder="Detail your operational or structural inquiry here..." required></textarea>
+                        <!-- Added name="message" -->
+                        <textarea name="message" rows="4" placeholder="Ask about tuition fees, requirements submission, or schedule evaluations..." required></textarea>
                     </div>
                 </div>
 
-                <button type="submit" class="form-action-btn">Transmit Ticket</button>
+                <button type="submit" class="form-action-btn">Submit Inquiry</button>
             </form>
         </div>
     </div>

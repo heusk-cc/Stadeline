@@ -3,45 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DCSA Academy - Sign In</title>
+    <title>DCSA - Student Portal Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Poppins:wght=400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Embedded helper to size the portal card icon smoothly */
+        .portal-header-logo { display: block; height: 65px; width: 65px; margin: 0 auto 15px auto; border-radius: 50%; object-fit: contain; }
+    </style>
 </head>
 <body>
+  
+      <nav class="navbar">
+        <a href="index.html" class="nav-logo">
+            <img src="assets/logo.jpg" alt="Datamex College of Saint Adeline Logo">
+            <span>DATAMEX COLLEGE OF SAINT ADELINE</span>
+        </a>
+        <div class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="strands.html">Programs</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Admissions</a></li>
+            <li><a href="login.html">SIS Portal</a></li>
+            <li><a href="register.html" class="nav-btn">Enroll Online</a></li>
+        </ul>
+    </nav>
 
-    <div class="form-view-wrapper" style="padding-top: 40px;">
+    <div class="form-view-wrapper">
         <div class="form-panel">
-            <h2>Portal Log In</h2>
-            <p class="panel-sub">Access your student tracking metrics</p>
+            <img src="assets/logo.jpg" alt="DCSA Shield" class="portal-header-logo">
+            <h2>Student SIS Portal</h2>
+            <p class="panel-sub">Access your institutional academic grades and records</p>
             
-            <form onsubmit="handleMockSubmit(event, 'Verification success. Initializing campus data streams...');">
+            <!-- Inside login.html, modify the opening <form> tag to point to our validation bridge: -->
+<form onsubmit="handlePortalLogin(event)">
                 <div class="form-group">
-                    <label>Discord Username</label>
+                    <label>Student ID Number</label>
                     <div class="input-container">
-                        <i class="fa-brands fa-discord"></i>
-                        <input type="text" placeholder="Your current handle" required>
+                        <i class="fa-solid fa-id-card"></i>
+                        <input type="text" placeholder="2026-XXXX-FV" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Portal Key / Password</label>
+                    <label>Portal Password</label>
                     <div class="input-container">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" placeholder="••••••••" required>
                     </div>
                 </div>
 
-                <button type="submit" class="form-action-btn">Verify Credentials</button>
+                <button type="submit" class="form-action-btn">Secure Sign In</button>
             </form>
 
             <div class="panel-footer-links">
-                Need an account? <a href="register.html">Apply for enrollment</a>
+                Incoming student? <a href="register.html">Apply through online admission</a>
                 <br><br>
-                <a href="index.html" style="color: var(--muted-gray);"><i class="fa-solid fa-arrow-left"></i> Back to Main Terminal</a>
+                <a href="index.html" style="color: var(--muted-gray);"><i class="fa-solid fa-arrow-left"></i> Home Page</a>
             </div>
         </div>
     </div>
+
+<script>
+    function handlePortalLogin(event) {
+        event.preventDefault();
+        const inputs = event.target.querySelectorAll("input");
+        
+        const typedId = inputs[0].value.trim();       // Student ID input field
+        const typedPassword = inputs[1].value.trim(); // Password input field
+
+        // Read the live active database straight out of browser memory
+        const liveDatabase = JSON.parse(localStorage.getItem("dcsa_local_db")) || {};
+
+        // Look up if the entered Student ID key exists inside the object map
+        if (liveDatabase[typedId]) {
+            const currentStudent = liveDatabase[typedId];
+
+            // Verify if their matching password parameters are correct
+            if (currentStudent.password === typedPassword) {
+                // Save this specific user profile into the active temporary browser window session
+                sessionStorage.setItem("active_student_session", JSON.stringify(currentStudent));
+                window.location.href = "dashboard.html";
+                return;
+            }
+        }
+        
+        alert("Authentication Denied.\n\nInvalid ID or Password.\nTry: DCSA-001-FV with password123\nOr use a newly registered ID.");
+    }
+</script>
 
     <script src="js/main.js" defer></script>
 </body>
