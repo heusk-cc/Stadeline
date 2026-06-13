@@ -162,17 +162,77 @@ window.searchStudentProfile = async function () {
   }
 };
 
-// HELPER PIPELINE: Sends API request directly to EmailJS REST endpoints
-async function sendEnrollmentStatusEmail(targetEmail, studentName, studentId) {
+// DYNAMIC HELPER PIPELINE: Dispatches customized transactional layouts to your EmailJS REST configurations
+async function sendStatusEmail(targetEmail, studentName, studentId, selectedStatus) {
+  // 1. Establish structural default fallback properties
+  let emailTitle = "Application Update";
+  let bodyP1 = "Thank you for your interest in DCSA Fairview. Your application record has been updated in our tracking systems.";
+  let bodyP2 = "You can log into your tracking dashboard to follow along with subsequent registration developments.";
+  let statusColor = "#475569"; // slate grey base
+  let statusIcon = "ℹ️";
+  let detailsDisplay = "none"; // Hide Student ID section unless finalized
+  let actionUrl = "https://stadeline.vercel.app/login.html";
+  let actionText = "Go To Login Portal";
+
+  // 2. Adjust text layout values matching your dropdown selector criteria options
+  switch (selectedStatus) {
+    case "PENDING APPLICATION":
+      emailTitle = "Application Under Review";
+      bodyP1 = "Thank you for applying to DCSA Fairview. Your file has been received and is currently under active evaluation by our admissions committee.";
+      bodyP2 = "Please verify that all basic required document components are uploaded. We will keep you updated as verification parameters change.";
+      statusColor = "#d97706"; // Amber / Orange
+      statusIcon = "⏳";
+      actionText = "Check Application Progress";
+      break;
+
+    case "APPROVED":
+      emailTitle = "Application Approved!";
+      bodyP1 = "Great news! Your preliminary application to DCSA Fairview has been verified and approved. You are now authorized to complete your registration steps.";
+      bodyP2 = "To lock in your selected academic branch path slots, please process your initial accounts configuration parameters online or visit our physical desk.";
+      statusColor = "#2563eb"; // Royal Blue
+      statusIcon = "🎉";
+      actionText = "Complete Enrollment Registration";
+      break;
+
+    case "OFFICIALLY ENROLLED":
+      emailTitle = "Official Enrollment Confirmed";
+      bodyP1 = "Congratulations! We are pleased to inform you that your application to DCSA Fairview for the Academic Year 2026-2027 has been officially finalized and logged.";
+      bodyP2 = "You are now officially listed as an active campus student. You may log into your dedicated portal to view metrics like class schedules and assigned subject teachers.";
+      statusColor = "#059669"; // Green
+      statusIcon = "✅";
+      detailsDisplay = "block"; // Explicitly reveal student identification table box
+      actionText = "Access Student Dashboard";
+      break;
+
+    case "REJECTED / INCOMPLETE":
+      emailTitle = "Admissions Processing Update";
+      bodyP1 = "Thank you for your interest in DCSA Fairview. After evaluating your profile submission details, our department determined that required criteria elements are currently missing or unfulfilled.";
+      bodyP2 = "Please reach out to the institutional office support channel immediately to secure specific clarification regarding file deficiencies or resubmission pathways.";
+      statusColor = "#dc2626"; // Crimson Red
+      statusIcon = "❌";
+      actionUrl = "https://stadeline.vercel.app/contact.html"; // Route directly to support portal options
+      actionText = "Contact Admissions Desk";
+      break;
+  }
+
+  // 3. Package structural dynamic metrics payload assembly
   const payload = {
-    service_id: "service_61yzay9",            // Auto-linked from your login.js configurations
-    template_id: "template_d6z7jve", // TODO: Put your specific EmailJS Enrollment Notification Template ID here
-    user_id: "DDVLZbYjEeonKEVG2",               // Auto-linked from your login.js configurations
+    service_id: "service_61yzay9",
+    template_id: "template_d6z7jve", // Linked perfectly to your provided template ID
+    user_id: "DDVLZbYjEeonKEVG2",
     template_params: {
       to_email: targetEmail,
       applicant_name: studentName,
       student_id: studentId,
-      status: "OFFICIALLY ENROLLED"
+      status: selectedStatus,
+      email_title: emailTitle,
+      body_paragraph_1: bodyP1,
+      body_paragraph_2: bodyP2,
+      status_color: statusColor,
+      status_icon: statusIcon,
+      details_display: detailsDisplay,
+      action_url: actionUrl,
+      action_text: actionText
     }
   };
 
@@ -184,13 +244,13 @@ async function sendEnrollmentStatusEmail(targetEmail, studentName, studentId) {
     });
 
     if (response.ok) {
-      console.log("Enrollment success email dispatched successfully.");
+      console.log(`Status notification email dispatched successfully for: ${selectedStatus}`);
     } else {
       const errResponseText = await response.text();
       console.warn("EmailJS Service rejected submission payload:", response.status, errResponseText);
     }
   } catch (err) {
-    console.error("Network interface breakdown contacting EmailJS endpoints:", err);
+    console.error("Network communication interface issue reaching EmailJS endpoints:", err);
   }
 }
 
@@ -258,13 +318,14 @@ window.updateStudentProfile = async function (event) {
 
     await updateDoc(doc(db, "students", currentDocId), updates);
 
-    // --- TRIGGER EMAIL ACTIONS ON STATUS ALTERATIONS ---
-    if (status === "OFFICIALLY ENROLLED" && current.enrollmentStatus !== "OFFICIALLY ENROLLED") {
-      setStatus("Saving records and sending verification email...", "info");
-      await sendEnrollmentStatusEmail(
+    // --- TRIGGER EMAIL ACTIONS ON ANY VALID STATUS ALTERATIONS ---
+    if (status && status !== current.enrollmentStatus && status !== "Keep Current Status") {
+      setStatus("Saving records and sending verification updates email...", "info");
+      await sendStatusEmail(
         email || current.email,
         username || current.username,
-        studentId || current.studentId
+        studentId || current.studentId,
+        status
       );
     }
 
