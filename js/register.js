@@ -46,7 +46,9 @@ window.handleRegistrationSubmit = async function(event) {
             }
         };
 
-        await setDoc(doc(db, "students", user.uid), newStudentProfile);
+        // FIX: Use Student ID as the document key (consistent with existing records)
+        // Previously used user.uid which caused mixed key formats in Firestore
+        await setDoc(doc(db, "students", assignedStudentId), newStudentProfile);
 
         // Send credentials email (non-fatal — student is already saved if this fails)
         await sendCredentialsEmail(email, fullName, assignedStudentId, generatedPassword);
