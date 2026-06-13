@@ -24,6 +24,7 @@ window.handleRegistrationSubmit = async function(event) {
         const user = userCredential.user;
 
         const newStudentProfile = {
+            uid: user.uid, // Store the Auth UID inside the document for reference
             studentId: assignedStudentId,
             username: fullName,
             email: email,
@@ -46,7 +47,7 @@ window.handleRegistrationSubmit = async function(event) {
             }
         };
 
-        await setDoc(doc(db, "students", user.uid), newStudentProfile);
+        await setDoc(doc(db, "students", assignedStudentId), newStudentProfile);
 
         // Send credentials email (non-fatal — student is already saved if this fails)
         await sendCredentialsEmail(email, fullName, assignedStudentId, generatedPassword);
