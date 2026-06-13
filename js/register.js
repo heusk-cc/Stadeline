@@ -8,7 +8,7 @@ window.handleRegistrationSubmit = async function(event) {
     
     // --- EMAIL TOGGLE ---
     // Change this to 'true' when you are ready to send live emails
-    const ENABLE_EMAIL_SENDING = false; 
+    const ENABLE_EMAIL_SENDING = true; 
 
     const fullName = document.getElementById("regFullName").value.trim();
     const email = document.getElementById("regEmail").value.trim();
@@ -43,11 +43,11 @@ window.handleRegistrationSubmit = async function(event) {
                 "PE and Health 1": "N/A"
             },
             schedule: {
-                "Monday": "08:00 AM - 10:00 AM (Core Class) | 1:00 PM - 3:00 PM (Track Spec)",
-                "Tuesday": "08:00 AM - 10:00 AM (Core Class) | 1:00 PM - 3:00 PM (Track Spec)",
-                "Wednesday": "08:00 AM - 10:00 AM (Core Class)",
-                "Thursday": "08:00 AM - 10:00 AM (Core Class) | 1:00 PM - 3:00 PM (Track Spec)",
-                "Friday": "Asynchronous / Module Day"
+                "Monday": "TBA",
+                "Tuesday": "TBA",
+                "Wednesday": "TBA",
+                "Thursday": "TBA",
+                "Friday": "TBA"
             }
         };
 
