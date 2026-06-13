@@ -262,7 +262,7 @@ window.updateStudentProfile = async function (event) {
 
         if (targetEmail && typeof emailjs !== 'undefined') {
             // IMPORTANT: Replace SERVICE_ID and TEMPLATE_ID with your actual EmailJS keys
-            emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+            emailjs.send("service_61yzay9", "template_d6z7jve", {
                 to_email: targetEmail,
                 applicant_name: targetName,
                 student_id: targetId
