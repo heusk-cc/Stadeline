@@ -1,330 +1,262 @@
-import {
-db,
-collection,
-getDocs,
-doc,
-updateDoc
-}
-from "./firebase-config.js";
+import { db } from "./firebase-config.js";
+import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-
-let currentID="";
-
-
-
-const subjects=[
-
-"Earth and Life Science",
-"General Mathematics",
-"Introduction to World Religions",
-"Oral Communication",
-"PE and Health 1"
-
+const subjects = [
+  "Earth and Life Science",
+  "General Mathematics",
+  "Introduction to World Religions",
+  "Oral Communication",
+  "PE and Health 1"
 ];
 
-
-const days=[
-
-"Monday",
-"Tuesday",
-"Wednesday",
-"Thursday",
-"Friday"
-
+const days = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday"
 ];
 
+let currentDocId = "";
+let currentStudentData = null;
 
+function setStatus(message, type = "info") {
+  const el = document.getElementById("searchStatus");
+  if (!el) return;
 
+  el.style.display = "block";
+  el.textContent = message;
 
-function createTables(){
-
-
-let grades="";
-
-subjects.forEach(x=>{
-
-grades+=`
-
-<tr>
-
-<td>${x}</td>
-
-<td>
-<input id="grade-${x}"
-style="width:95%">
-</td>
-
-
-</tr>
-
-`;
-
-});
-
-
-document.getElementById("gradesTable").innerHTML=grades;
-
-
-
-let sched="";
-
-
-days.forEach(x=>{
-
-
-sched+=`
-
-<tr>
-
-<td>${x}</td>
-
-<td>
-
-<input id="sched-${x}"
-style="width:95%">
-
-</td>
-
-</tr>
-
-
-`;
-
-
-});
-
-
-document.getElementById("scheduleTable").innerHTML=sched;
-
-
+  if (type === "error") {
+    el.style.background = "#fef2f2";
+    el.style.color = "#991b1b";
+    el.style.border = "1px solid #fecaca";
+  } else if (type === "success") {
+    el.style.background = "#f0fdf4";
+    el.style.color = "#166534";
+    el.style.border = "1px solid #bbf7d0";
+  } else {
+    el.style.background = "#eff6ff";
+    el.style.color = "#1e3a8a";
+    el.style.border = "1px solid #bfdbfe";
+  }
 }
 
-
-
-createTables();
-
-
-
-
-
-window.searchStudentProfile=async function(){
-
-
-
-let value=
-document.getElementById("searchStudentId").value
-.toLowerCase();
-
-
-
-let snap=
-await getDocs(collection(db,"students"));
-
-
-
-let found=null;
-
-
-
-snap.forEach(d=>{
-
-
-let data=d.data();
-
-
-if(
-
-d.id.toLowerCase()==value ||
-
-(data.studentId||"").toLowerCase()==value ||
-
-(data.email||"").toLowerCase()==value ||
-
-(data.username||"").toLowerCase()==value
-
-)
-
-{
-
-found={
-
-id:d.id,
-data:data
-
-};
-
+function trim(value) {
+  return String(value ?? "").trim();
 }
 
-
-});
-
-
-
-
-if(!found){
-
-alert("Student not found");
-
-return;
-
+function isBlank(value) {
+  return trim(value) === "";
 }
 
+function createTables() {
+  const gradesBody = document.getElementById("gradesTable");
+  const scheduleBody = document.getElementById("scheduleTable");
 
+  if (gradesBody) {
+    gradesBody.innerHTML = subjects.map((subject, index) => `
+      <tr>
+        <td>${subject}</td>
+        <td><input id="grade-${index}" placeholder="Grade"></td>
+      </tr>
+    `).join("");
+  }
 
+  if (scheduleBody) {
+    scheduleBody.innerHTML = days.map((day, index) => `
+      <tr>
+        <td>${day}</td>
+        <td><input id="schedule-${index}" placeholder="Schedule"></td>
+      </tr>
+    `).join("");
+  }
+}
 
-currentID=found.id;
+async function findStudent(searchTerm) {
+  const normalized = trim(searchTerm).toLowerCase();
+  if (!normalized) return null;
 
+  const snap = await getDocs(collection(db, "students"));
+  let partial = null;
 
-let s=found.data;
+  snap.forEach((studentDoc) => {
+    const data = studentDoc.data() || {};
+    const candidates = [
+      studentDoc.id,
+      data.uid,
+      data.studentId,
+      data.email,
+      data.username
+    ]
+      .filter(Boolean)
+      .map((v) => trim(v).toLowerCase());
 
+    if (candidates.includes(normalized)) {
+      partial = { id: studentDoc.id, data };
+      partial.exact = true;
+      return;
+    }
 
+    if (!partial) {
+      const hit = candidates.some((v) => v.includes(normalized));
+      if (hit) {
+        partial = { id: studentDoc.id, data };
+      }
+    }
+  });
 
-document.getElementById("adminEditForm")
-.style.display="block";
+  return partial;
+}
 
+function fillForm(studentId, data) {
+  currentDocId = studentId;
+  currentStudentData = data || {};
 
+  document.getElementById("adminEditForm").style.display = "block";
 
-adminStudentName.value=s.username||"";
+  document.getElementById("adminStudentName").value = data.username || "";
+  document.getElementById("adminStudentEmail").value = data.email || "";
+  document.getElementById("adminStudentStudentId").value = data.studentId || "";
+  document.getElementById("adminStudentTrack").value = data.track || "";
+  document.getElementById("adminStudentStatus").value = data.enrollmentStatus || "";
+  document.getElementById("adminRegistrationDate").value = data.registrationDate || "";
 
-adminStudentEmail.value=s.email||"";
+  subjects.forEach((subject, index) => {
+    document.getElementById(`grade-${index}`).value = data.grades?.[subject] ?? "";
+  });
 
-adminStudentStudentId.value=s.studentId||"";
+  days.forEach((day, index) => {
+    document.getElementById(`schedule-${index}`).value = data.schedule?.[day] ?? "";
+  });
+}
 
-adminStudentTrack.value=s.track||"";
+window.searchStudentProfile = async function () {
+  const input = document.getElementById("searchStudentId");
+  const searchValue = trim(input?.value);
 
-adminStudentStatus.value=s.enrollmentStatus||"";
+  if (!searchValue) {
+    alert("Enter a Student ID, Email, Username, UID, or Doc ID.");
+    return;
+  }
 
-adminRegistrationDate.value=
-s.registrationDate||"";
+  setStatus("Searching student records...");
 
+  try {
+    const found = await findStudent(searchValue);
 
+    if (!found) {
+      currentDocId = "";
+      currentStudentData = null;
+      document.getElementById("adminEditForm").style.display = "none";
+      setStatus("Student not found.", "error");
+      return;
+    }
 
-subjects.forEach(x=>{
-
-let id="grade-"+x;
-
-document.getElementById(id).value=
-s.grades?.[x] || "";
-
-});
-
-
-
-days.forEach(x=>{
-
-document.getElementById("sched-"+x)
-.value=
-s.schedule?.[x] || "";
-
-});
-
-
+    fillForm(found.id, found.data);
+    setStatus(`Loaded ${found.data.username || found.data.studentId || found.id}.`, "success");
+  } catch (error) {
+    console.error(error);
+    setStatus("Failed to load student record.", "error");
+    alert(error.message || "Failed to load student record.");
+  }
 };
 
+window.updateStudentProfile = async function (event) {
+  event.preventDefault();
 
+  if (!currentDocId) {
+    alert("No student selected.");
+    return;
+  }
 
+  try {
+    const updates = {};
+    const current = currentStudentData || {};
 
+    const username = trim(document.getElementById("adminStudentName").value);
+    const email = trim(document.getElementById("adminStudentEmail").value);
+    const studentId = trim(document.getElementById("adminStudentStudentId").value);
+    const track = trim(document.getElementById("adminStudentTrack").value);
+    const status = trim(document.getElementById("adminStudentStatus").value);
+    const registrationDate = trim(document.getElementById("adminRegistrationDate").value);
 
-window.updateStudentProfile=async function(e){
+    if (!isBlank(username)) updates.username = username;
+    if (!isBlank(email)) updates.email = email;
+    if (!isBlank(studentId)) updates.studentId = studentId;
+    if (!isBlank(track)) updates.track = track;
+    if (!isBlank(status)) updates.enrollmentStatus = status;
+    if (!isBlank(registrationDate)) updates.registrationDate = registrationDate;
 
+    const mergedGrades = { ...(current.grades || {}) };
+    let gradesChanged = false;
 
-e.preventDefault();
+    subjects.forEach((subject, index) => {
+      const value = trim(document.getElementById(`grade-${index}`).value);
+      if (!isBlank(value) && mergedGrades[subject] !== value) {
+        mergedGrades[subject] = value;
+        gradesChanged = true;
+      }
+    });
 
+    if (gradesChanged) {
+      updates.grades = mergedGrades;
+    }
 
+    const mergedSchedule = { ...(current.schedule || {}) };
+    let scheduleChanged = false;
 
-let updates={};
+    days.forEach((day, index) => {
+      const value = trim(document.getElementById(`schedule-${index}`).value);
+      if (!isBlank(value) && mergedSchedule[day] !== value) {
+        mergedSchedule[day] = value;
+        scheduleChanged = true;
+      }
+    });
 
+    if (scheduleChanged) {
+      updates.schedule = mergedSchedule;
+    }
 
+    if (Object.keys(updates).length === 0) {
+      setStatus("No changes to save.", "info");
+      alert("No changes to save.");
+      return;
+    }
 
-if(adminStudentName.value)
-updates.username=
-adminStudentName.value;
+    await updateDoc(doc(db, "students", currentDocId), updates);
 
+    currentStudentData = {
+      ...current,
+      ...updates,
+      grades: updates.grades || current.grades || {},
+      schedule: updates.schedule || current.schedule || {}
+    };
 
-if(adminStudentEmail.value)
-updates.email=
-adminStudentEmail.value;
-
-
-if(adminStudentStudentId.value)
-updates.studentId=
-adminStudentStudentId.value;
-
-
-if(adminStudentTrack.value)
-updates.track=
-adminStudentTrack.value;
-
-
-if(adminStudentStatus.value)
-updates.enrollmentStatus=
-adminStudentStatus.value;
-
-
-
-let grades={};
-
-subjects.forEach(x=>{
-
-let value=
-document.getElementById("grade-"+x).value;
-
-
-if(value)
-grades[x]=value;
-
-});
-
-
-
-if(Object.keys(grades).length)
-updates.grades=grades;
-
-
-
-let schedule={};
-
-
-days.forEach(x=>{
-
-
-let value=
-document.getElementById("sched-"+x).value;
-
-
-if(value)
-schedule[x]=value;
-
-
-});
-
-
-
-if(Object.keys(schedule).length)
-updates.schedule=schedule;
-
-
-
-if(adminRegistrationDate.value)
-
-updates.registrationDate=
-adminRegistrationDate.value;
-
-
-
-
-
-await updateDoc(
-
-doc(db,"students",currentID),
-
-updates
-
-);
-
-
-
-alert("Student updated");
-
-
+    setStatus("Student updated successfully.", "success");
+    alert("Student updated successfully.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Update failed.", "error");
+    alert(error.message || "Update failed.");
+  }
 };
+
+window.logoutAdmin = function () {
+  sessionStorage.removeItem("adminAuthenticated");
+  window.location.href = "admin-login.html";
+};
+
+window.addEventListener("DOMContentLoaded", () => {
+  createTables();
+
+  const searchInput = document.getElementById("searchStudentId");
+  if (searchInput) {
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        window.searchStudentProfile();
+      }
+    });
+  }
+});
