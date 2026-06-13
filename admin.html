@@ -1,99 +1,408 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>DCSA Admin Portal</title>
-<style>
-body{background:#f1f5f9;font-family:system-ui;margin:0}
-header{background:#0f172a;color:white;padding:20px 45px;display:flex;justify-content:space-between;align-items:center;border-bottom:5px solid #8b1416}
-.container{max-width:1100px;margin:50px auto;background:white;padding:40px;border-radius:15px;box-shadow:0 10px 30px #0002}
-h1{font-size:30px}h2{font-size:28px;color:#0f172a}h3{font-size:22px;color:#8b1416}
-input,select{padding:12px;font-size:16px;border:1px solid #cbd5e1;border-radius:6px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-.search{display:flex;gap:10px}
-.search button,.save{background:#8b1416;color:white;border:0;padding:14px;border-radius:6px}
-.search button{background:#0f172a}
-table{width:100%;border-collapse:collapse;margin-top:15px;font-size:17px}
-th{background:#0f172a;color:white;padding:15px}
-td{border:1px solid #cbd5e1;padding:12px}
-td input{width:95%}
-.save{width:100%;margin-top:30px;font-weight:bold}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>DCSA SIS | Admin Portal</title>
+  <link rel="icon" type="image/x-icon" href="assets/round-logo.png">
+
+  <style>
+    :root {
+      --primary: #8b1416;
+      --dark: #0f172a;
+      --slate: #475569;
+      --light: #f8fafc;
+      --border: #e2e8f0;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--dark);
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--dark);
+      margin: 0 0 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .portal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--dark);
+      color: white;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      border-left: 6px solid var(--primary);
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      margin-bottom: 20px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .header-brand img {
+      height: 36px;
+      width: 36px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex: 0 0 auto;
+    }
+
+    .header-brand h1 {
+      font-size: 1.05rem;
+      line-height: 1.2;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .signout-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .signout-btn:hover {
+      opacity: 0.95;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font: inherit;
+      background: white;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(139, 20, 22, 0.12);
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      font-weight: 700;
+      font: inherit;
+    }
+
+    .save-btn:hover {
+      opacity: 0.95;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    #homeNotice {
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid var(--primary);
+      font-size: 15px;
+      color: var(--slate);
+    }
+
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+      min-width: 520px;
+    }
+
+    th {
+      background: #0f172a;
+      color: white;
+      padding: 14px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    td input {
+      margin: 0;
+      width: 100%;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 12px;
+      background: #fee2e2;
+      color: var(--primary);
+      vertical-align: middle;
+    }
+
+    .admin-note {
+      margin-top: 10px;
+      color: var(--slate);
+      font-size: 14px;
+    }
+
+    #searchStatus {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .form-row-3,
+      .form-row-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .portal-header {
+        top: 10px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+
+      .card {
+        padding: 16px;
+        border-radius: 12px;
+      }
+
+      .portal-header {
+        padding: 10px 12px;
+      }
+
+      .header-brand h1 {
+        font-size: 0.95rem;
+      }
+
+      .signout-btn {
+        padding: 9px 12px;
+        font-size: 0.92rem;
+      }
+
+      .card-title {
+        font-size: 15px;
+      }
+
+      th, td {
+        padding: 11px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-<h1>DCSA ADMIN PORTAL</h1>
-<button onclick="logoutAdmin()">LOGOUT</button>
-</header>
+  <div class="dashboard-container">
 
-<div class="container">
+    <header class="portal-header">
+      <div class="header-brand">
+        <img src="assets/round-logo.png" alt="DCSA Logo">
+        <h1>DCSA SIS | ADMIN PORTAL</h1>
+      </div>
+      <div class="header-actions">
+        <button class="signout-btn" onclick="logoutAdmin()">LOG OUT</button>
+      </div>
+    </header>
 
-<h2>Student Management</h2>
+    <main>
 
-<div class="search">
-<input id="searchStudentId" placeholder="Student ID / Email / Username" style="flex:1">
-<button onclick="searchStudentProfile()">SEARCH</button>
-</div>
+      <div class="card">
+        <h2 class="card-title">Student Management</h2>
 
-<form id="adminEditForm" style="display:none" onsubmit="updateStudentProfile(event)">
+        <div class="search-row">
+          <input
+            id="searchStudentId"
+            placeholder="Search by Student ID / Email / Username / UID / Firestore Doc ID"
+          >
+          <button class="save-btn" type="button" onclick="searchStudentProfile()">Search Record</button>
+        </div>
 
-<h3>Profile</h3>
+        <div id="searchStatus"></div>
+        <div class="admin-note">Leave any field blank if you do not want to change it.</div>
+      </div>
 
-<div class="grid">
-<input id="adminStudentName" placeholder="Username">
-<input id="adminStudentEmail" placeholder="Email">
-<input id="adminStudentStudentId" placeholder="Student ID">
+      <form id="adminEditForm" style="display:none" onsubmit="updateStudentProfile(event)">
 
-<select id="adminStudentTrack">
-<option value="">Keep Track</option>
-<option value="stem">STEM</option>
-<option value="humss">HUMSS</option>
-<option value="abm">ABM</option>
-<option value="ict">ICT</option>
-<option value="tvl">TVL</option>
-</select>
+        <div class="card">
+          <h2 class="card-title">Profile</h2>
 
-<select id="adminStudentStatus">
-<option value="">Keep Status</option>
-<option>PENDING APPLICATION</option>
-<option>APPROVED</option>
-<option>OFFICIALLY ENROLLED</option>
-</select>
+          <div class="form-row-3">
+            <input id="adminStudentName" placeholder="Username">
+            <input id="adminStudentEmail" placeholder="Email">
+            <input id="adminStudentStudentId" placeholder="Student ID">
+          </div>
 
-<input id="adminRegistrationDate">
-</div>
+          <div class="form-row-3">
+            <select id="adminStudentTrack">
+              <option value="">Keep Current Track</option>
+              <option value="stem">STEM</option>
+              <option value="humss">HUMSS</option>
+              <option value="abm">ABM</option>
+              <option value="ict">ICT</option>
+              <option value="tvl">TVL</option>
+            </select>
 
-<h3>Grades</h3>
+            <select id="adminStudentStatus">
+              <option value="">Keep Current Status</option>
+              <option value="PENDING APPLICATION">PENDING APPLICATION</option>
+              <option value="APPROVED">APPROVED</option>
+              <option value="OFFICIALLY ENROLLED">OFFICIALLY ENROLLED</option>
+              <option value="REJECTED / INCOMPLETE">REJECTED / INCOMPLETE</option>
+            </select>
 
-<table>
-<thead>
-<tr><th>Subject</th><th>Grade</th></tr>
-</thead>
-<tbody id="gradesTable"></tbody>
-</table>
+            <input id="adminRegistrationDate" placeholder="Registration Date">
+          </div>
+        </div>
 
-<h3>Schedule</h3>
+        <div class="card">
+          <h2 class="card-title">Report Card</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Grade</th>
+                </tr>
+              </thead>
+              <tbody id="gradesTable"></tbody>
+            </table>
+          </div>
+        </div>
 
-<table>
-<thead>
-<tr><th>Day</th><th>Schedule</th></tr>
-</thead>
-<tbody id="scheduleTable"></tbody>
-</table>
+        <div class="card">
+          <h2 class="card-title">Class Schedule</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Schedule</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleTable"></tbody>
+            </table>
+          </div>
+        </div>
 
-<button class="save">SAVE CHANGES</button>
+        <div class="card">
+          <button class="save-btn" type="submit">SAVE CHANGES</button>
+        </div>
 
-</form>
-</div>
+      </form>
+    </main>
+  </div>
 
-<script>
-function logoutAdmin(){
-sessionStorage.removeItem("adminAuthenticated");
-location.href="admin-login.html";
-}
-</script>
+  <script>
+    function logoutAdmin() {
+      sessionStorage.removeItem("adminAuthenticated");
+      window.location.href = "admin-login.html";
+    }
 
-<script type="module" src="js/admin.js"></script>
+    if (sessionStorage.getItem("adminAuthenticated") !== "true") {
+      window.location.href = "admin-login.html";
+    }
+  </script>
 
+  <script type="module" src="js/admin.js"></script>
 </body>
 </html>
