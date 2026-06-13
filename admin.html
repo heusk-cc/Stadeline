@@ -307,6 +307,14 @@
     <main>
 
       <div class="card">
+        <h2 class="card-title">Campus Announcements</h2>
+        <div class="search-row">
+          <input id="announcementText" placeholder="Enter announcement message for the student dashboard...">
+          <button class="save-btn" type="button" onclick="postAnnouncement()">Post Announcement</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 class="card-title">Student Management</h2>
 
         <div class="search-row">
@@ -391,6 +399,15 @@
       </form>
     </main>
   </div>
+
+  <!-- EmailJS Integration -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function(){
+       // IMPORTANT: Replace this with your actual EmailJS Public Key from Account -> API Keys
+       emailjs.init("YOUR_PUBLIC_KEY"); 
+    })();
+  </script>
 
   <script>
     function logoutAdmin() {

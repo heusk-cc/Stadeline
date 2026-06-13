@@ -1,5 +1,5 @@
 import { db } from "./firebase-config.js";
-import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const subjects = [
   "Earth and Life Science",
@@ -131,6 +131,32 @@ function fillForm(studentId, data) {
   });
 }
 
+// POST ANNOUNCEMENT FEATURE
+window.postAnnouncement = async function() {
+  const input = document.getElementById("announcementText");
+  const text = trim(input?.value);
+
+  if (!text) {
+    alert("Please enter an announcement message.");
+    return;
+  }
+
+  setStatus("Posting announcement...");
+  try {
+    await addDoc(collection(db, "announcements"), {
+        message: text,
+        timestamp: new Date().toISOString()
+    });
+    input.value = "";
+    setStatus("Announcement posted successfully!", "success");
+    alert("Announcement broadcasted to student dashboards!");
+  } catch (error) {
+    console.error(error);
+    setStatus("Failed to post announcement.", "error");
+    alert(error.message || "Failed to post announcement.");
+  }
+};
+
 window.searchStudentProfile = async function () {
   const input = document.getElementById("searchStudentId");
   const searchValue = trim(input?.value);
@@ -173,6 +199,7 @@ window.updateStudentProfile = async function (event) {
   try {
     const updates = {};
     const current = currentStudentData || {};
+    const previousStatus = current.enrollmentStatus;
 
     const username = trim(document.getElementById("adminStudentName").value);
     const email = trim(document.getElementById("adminStudentEmail").value);
@@ -224,7 +251,26 @@ window.updateStudentProfile = async function (event) {
       return;
     }
 
+    // UPDATE FIRESTORE
     await updateDoc(doc(db, "students", currentDocId), updates);
+
+    // TRIGGER EMAILJS IF STATUS CHANGES TO "OFFICIALLY ENROLLED"
+    if (updates.enrollmentStatus === "OFFICIALLY ENROLLED" && previousStatus !== "OFFICIALLY ENROLLED") {
+        const targetEmail = updates.email || current.email;
+        const targetName = updates.username || current.username;
+        const targetId = updates.studentId || current.studentId;
+
+        if (targetEmail && typeof emailjs !== 'undefined') {
+            // IMPORTANT: Replace SERVICE_ID and TEMPLATE_ID with your actual EmailJS keys
+            emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+                to_email: targetEmail,
+                applicant_name: targetName,
+                student_id: targetId
+            })
+            .then(() => console.log("Enrollment Email dispatched successfully to: " + targetEmail))
+            .catch(err => console.error("EmailJS Error:", err));
+        }
+    }
 
     currentStudentData = {
       ...current,

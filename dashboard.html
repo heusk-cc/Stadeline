@@ -505,9 +505,9 @@
       <div id="account" class="content-section card">
         <h2 class="card-title">Account Security</h2>
         <p class="subtle">Password changes should be handled through Firebase Authentication.</p>
-        <form onsubmit="return false;">
-          <input type="password" id="newPassword" placeholder="New Password" disabled>
-          <button type="button" class="save-btn" disabled>Update Password</button>
+        <form id="passwordForm" onsubmit="handlePasswordUpdate(event)">
+          <input type="password" id="newPassword" placeholder="New Password" required minlength="6">
+          <button type="submit" class="save-btn">Update Password</button>
         </form>
       </div>
     </main>

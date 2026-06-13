@@ -1,5 +1,6 @@
 import { db } from "./firebase-config.js";
-import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, onSnapshot, updateDoc, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const activeStudentId = sessionStorage.getItem("loggedStudentId");
 
@@ -33,12 +34,30 @@ function loadStudentDashboard() {
         const pending = data.enrollmentStatus === "PENDING APPLICATION";
         togglePortalSections(!pending);
 
-        const notice = document.getElementById("homeNotice");
-        if (notice) {
-            notice.innerHTML = pending
-                ? `<strong>Application Status:</strong> Your application is currently under review. Please wait for the admin to verify your records.`
-                : `<strong>Portal Update:</strong> Your account is active. You can now view your schedule and academic grades.`;
+        // Set base application status notice
+        const baseNoticeMsg = pending
+            ? `<strong>Application Status:</strong> Your application is currently under review. Please wait for the admin to verify your records.`
+            : `<strong>Portal Update:</strong> Your account is active. You can now view your schedule and academic grades.`;
+            
+        const noticeElement = document.getElementById("homeNotice");
+        if (noticeElement) {
+            noticeElement.innerHTML = baseNoticeMsg;
         }
+
+        // Listen for Global Announcements and append them below the status notice
+        const announceQ = query(collection(db, "announcements"), orderBy("timestamp", "desc"), limit(1));
+        onSnapshot(announceQ, (announceSnap) => {
+            if (!announceSnap.empty) {
+                let latestMsg = "";
+                announceSnap.forEach((doc) => {
+                    latestMsg = doc.data().message;
+                });
+                
+                if (noticeElement) {
+                    noticeElement.innerHTML = `${baseNoticeMsg}<br><br><span style="color:#059669"><strong>📢 Campus Announcement:</strong> ${latestMsg}</span>`;
+                }
+            }
+        });
 
         fillProfile(data);
         renderGrades(data.grades);
@@ -183,6 +202,25 @@ window.saveProfile = async function (event) {
     } catch (error) {
         console.error("Profile update failed:", error);
         alert("Failed to update profile.");
+    }
+};
+
+window.handlePasswordUpdate = async function(event) {
+    event.preventDefault();
+    const newPassword = document.getElementById("newPassword").value;
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+        try {
+            await updatePassword(user, newPassword);
+            alert("Password updated successfully!");
+            document.getElementById("passwordForm").reset();
+        } catch (error) {
+            alert("Error updating password. You may need to log out and log back in to verify your identity. Error: " + error.message);
+        }
+    } else {
+        alert("Security Error: No authenticated user session found. Please log out and back in.");
     }
 };
 
