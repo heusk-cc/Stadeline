@@ -1,69 +1,209 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <title>DCSA Admin Portal</title>
 
-<link rel="stylesheet" href="css/style.css">
+<style>
+
+body{
+    background:#f1f5f9;
+    font-family:system-ui;
+    margin:0;
+}
+
+
+header{
+    background:#0f172a;
+    color:white;
+    padding:20px 45px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:5px solid #8b1416;
+}
+
+
+.container{
+
+    max-width:1100px;
+    margin:50px auto;
+    background:white;
+    padding:40px;
+    border-radius:15px;
+    box-shadow:0 10px 30px #0002;
+
+}
+
+
+
+h1{
+    font-size:30px;
+}
+
+
+h2{
+    font-size:28px;
+    color:#0f172a;
+}
+
+
+h3{
+    font-size:22px;
+    color:#8b1416;
+}
+
+
+
+input,select{
+
+padding:12px;
+font-size:16px;
+border:1px solid #cbd5e1;
+border-radius:6px;
+
+}
+
+
+.grid{
+
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+
+}
+
+
+
+button{
+
+cursor:pointer;
+font-size:16px;
+
+}
+
+
+
+.search{
+
+display:flex;
+gap:10px;
+
+}
+
+
+.search button{
+
+background:#0f172a;
+color:white;
+padding:12px 25px;
+border:0;
+border-radius:6px;
+
+}
+
+
+
+table{
+
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+font-size:17px;
+
+}
+
+
+th{
+
+background:#0f172a;
+color:white;
+padding:15px;
+
+}
+
+
+td{
+
+border:1px solid #cbd5e1;
+padding:12px;
+
+}
+
+
+
+td input{
+
+width:95%;
+
+}
+
+
+
+.save{
+
+width:100%;
+background:#8b1416;
+color:white;
+padding:18px;
+border:0;
+margin-top:30px;
+font-weight:bold;
+
+}
+
+
+
+</style>
 
 </head>
 
-<body style="background:#f1f5f9;font-family:system-ui;padding-bottom:40px">
 
 
-<header style="
-background:#0f172a;
-color:white;
-padding:15px 40px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-border-bottom:4px solid #8b1416">
+<body>
 
-<h2>DCSA ADMIN PORTAL</h2>
+
+
+<header>
+
+<h1>DCSA ADMIN PORTAL</h1>
 
 <button onclick="logoutAdmin()"
 style="
 background:#8b1416;
 color:white;
 border:0;
-padding:10px 20px;
-cursor:pointer">
+padding:12px 25px;">
 LOGOUT
 </button>
+
 
 </header>
 
 
 
-<div style="
-max-width:1000px;
-margin:40px auto;
-background:white;
-padding:30px;
-border-radius:10px">
+
+<div class="container">
 
 
 <h2>Student Management</h2>
 
 
-<div style="display:flex;gap:10px">
+
+<div class="search">
+
 
 <input id="searchStudentId"
-placeholder="Search Student ID / Email / Username"
-style="flex:1;padding:12px">
+placeholder="Student ID / Email / Username"
+style="flex:1">
 
 
-<button onclick="searchStudentProfile()"
-style="
-background:#0f172a;
-color:white;
-border:0;
-padding:12px 20px">
+<button onclick="searchStudentProfile()">
 SEARCH
 </button>
 
+
 </div>
+
 
 
 
@@ -79,22 +219,19 @@ onsubmit="updateStudentProfile(event)">
 <div class="grid">
 
 
-<input id="adminStudentName"
-placeholder="Username">
+<input id="adminStudentName" placeholder="Username">
 
 
-<input id="adminStudentEmail"
-placeholder="Email">
+<input id="adminStudentEmail" placeholder="Email">
 
 
-<input id="adminStudentStudentId"
-placeholder="Student ID">
+<input id="adminStudentStudentId" placeholder="Student ID">
 
 
 
 <select id="adminStudentTrack">
 
-<option value="">Keep Current Track</option>
+<option value="">Keep Track</option>
 <option value="stem">STEM</option>
 <option value="humss">HUMSS</option>
 <option value="abm">ABM</option>
@@ -108,43 +245,25 @@ placeholder="Student ID">
 <select id="adminStudentStatus">
 
 <option value="">Keep Status</option>
-
-<option>
-PENDING APPLICATION
-</option>
-
-<option>
-APPROVED
-</option>
-
-<option>
-OFFICIALLY ENROLLED
-</option>
-
-<option>
-REJECTED / INCOMPLETE
-</option>
-
+<option>PENDING APPLICATION</option>
+<option>APPROVED</option>
+<option>OFFICIALLY ENROLLED</option>
 
 </select>
 
 
-<input id="adminRegistrationDate"
-placeholder="Registration Date">
+<input id="adminRegistrationDate">
 
 
 </div>
 
 
 
-<hr>
-
-
 
 <h3>Grades</h3>
 
 
-<table width="100%" border="1">
+<table>
 
 <thead>
 
@@ -156,24 +275,20 @@ placeholder="Registration Date">
 </thead>
 
 
-<tbody id="gradesTable">
-
-
-</tbody>
+<tbody id="gradesTable"></tbody>
 
 
 </table>
 
 
 
-<hr>
-
 
 
 <h3>Schedule</h3>
 
 
-<table width="100%" border="1">
+<table>
+
 
 <thead>
 
@@ -185,27 +300,16 @@ placeholder="Registration Date">
 </thead>
 
 
-<tbody id="scheduleTable">
-
-
-</tbody>
+<tbody id="scheduleTable"></tbody>
 
 
 </table>
 
 
 
-<br>
 
 
-<button
-style="
-width:100%;
-padding:15px;
-background:#8b1416;
-color:white;
-border:0;
-font-weight:bold">
+<button class="save">
 
 SAVE CHANGES
 
@@ -213,6 +317,7 @@ SAVE CHANGES
 
 
 </form>
+
 
 
 </div>
@@ -228,7 +333,6 @@ sessionStorage.removeItem("adminAuthenticated");
 location.href="admin-login.html";
 
 }
-
 
 </script>
 
