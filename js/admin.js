@@ -1,95 +1,65 @@
-// 1. Only import the database instance from your local configuration file
 import { db } from "./firebase-config.js";
 
-// 2. Import the required Firestore methods directly from the official Firebase CDN
-import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let currentActiveEditingId = "";
 
-window.searchStudentProfile = async function() {
-    const searchBtn = document.querySelector("button[onclick='searchStudentProfile()']");
-    searchBtn.disabled = true;
-    searchBtn.textContent = "Searching...";
+window.loadStudents = async function(){
+    const list = document.getElementById("studentList");
+    list.innerHTML = "Loading...";
 
-    try {
-        const searchId =
-            document.getElementById("searchStudentId").value.trim();
+    const snap = await getDocs(collection(db,"students"));
+    list.innerHTML = "";
 
-        if (!searchId) {
-            alert("Enter a Student ID.");
-            return;
-        }
+    snap.forEach(s=>{
+        const d=s.data();
+        list.innerHTML += `
+        <tr>
+        <td>${d.studentId || s.id}</td>
+        <td>${d.username || ""}</td>
+        <td>${d.email || ""}</td>
+        <td>${d.enrollmentStatus || ""}</td>
+        <td><button onclick="searchStudentProfile('${s.id}')">Edit</button></td>
+        </tr>`;
+    });
+}
 
-        const studentDocRef = doc(db, "students", searchId);
-        const docSnap = await getDoc(studentDocRef);
+window.searchStudentProfile = async function(id){
+    currentActiveEditingId=id;
+    const s=await getDocs(collection(db,"students"));
+    const snap = s.docs.find(x=>x.id===id);
+    if(!snap) return;
+    const d=snap.data();
 
-        if (!docSnap.exists()) {
-            alert("Student not found.");
-            document.getElementById("adminEditForm").style.display = "none";
-            return;
-        }
+    adminStudentName.value=d.username||"";
+    adminStudentEmail.value=d.email||"";
+    adminStudentId.value=d.studentId||"";
+    adminStudentTrack.value=d.track||"";
+    adminStudentStatus.value=d.enrollmentStatus||"";
+    adminGrades.value=JSON.stringify(d.grades||{},null,2);
+    adminSchedule.value=JSON.stringify(d.schedule||{},null,2);
 
-        const data = docSnap.data();
+    adminEditForm.style.display="block";
+}
 
-        currentActiveEditingId = searchId;
+window.updateStudentProfile=async function(e){
+    e.preventDefault();
+    if(!currentActiveEditingId)return;
 
-        document.getElementById("adminStudentName").value =
-            data.username || "";
+    let updates={};
 
-        document.getElementById("adminStudentPassword").value =
-            data.password || "";
+    if(adminStudentName.value.trim()) updates.username=adminStudentName.value.trim();
+    if(adminStudentEmail.value.trim()) updates.email=adminStudentEmail.value.trim();
+    if(adminStudentId.value.trim()) updates.studentId=adminStudentId.value.trim();
+    if(adminStudentTrack.value.trim()) updates.track=adminStudentTrack.value.trim();
+    if(adminStudentStatus.value.trim()) updates.enrollmentStatus=adminStudentStatus.value;
 
-        document.getElementById("adminStudentEmail").value =
-            data.email || "";
+    try{ updates.grades=JSON.parse(adminGrades.value||"{}"); }catch(e){}
+    try{ updates.schedule=JSON.parse(adminSchedule.value||"{}"); }catch(e){}
 
-        document.getElementById("adminStudentStatus").value =
-            data.enrollmentStatus || "PENDING APPLICATION";
+    await updateDoc(doc(db,"students",currentActiveEditingId),updates);
+    alert("Updated successfully");
+    loadStudents();
+}
 
-        document.getElementById("adminEditForm").style.display = "block";
-
-    } catch (error) {
-        console.error(error);
-        alert("Unable to fetch student record.");
-    } finally {
-        searchBtn.disabled = false;
-        searchBtn.textContent = "Search Record";
-    }
-};
-
-window.updateStudentProfile = async function(event) {
-    event.preventDefault();
-
-    if (!currentActiveEditingId) {
-        alert("No student selected.");
-        return;
-    }
-
-    const updates = {};
-
-    const name = document.getElementById("adminStudentName").value.trim();
-    const password = document.getElementById("adminStudentPassword").value.trim();
-    const email = document.getElementById("adminStudentEmail").value.trim();
-    const status = document.getElementById("adminStudentStatus").value;
-
-    if (name !== "") updates.username = name;
-    if (password !== "") updates.password = password;
-    if (email !== "") updates.email = email;
-
-    updates.enrollmentStatus = status;
-
-    try {
-        const docRef = doc(db, "students", currentActiveEditingId);
-
-        await updateDoc(docRef, updates);
-
-        alert("Student record updated successfully.");
-    } catch (error) {
-        console.error(error);
-
-        if (error.code === "permission-denied") {
-            alert("Firestore rules blocked this update.");
-        } else {
-            alert(error.message);
-        }
-    }
-};
+loadStudents();
