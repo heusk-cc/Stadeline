@@ -6,6 +6,10 @@ import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebase
 window.handleRegistrationSubmit = async function(event) {
     event.preventDefault();
     
+    // --- EMAIL TOGGLE ---
+    // Change this to 'true' when you are ready to send live emails
+    const ENABLE_EMAIL_SENDING = false; 
+
     const fullName = document.getElementById("regFullName").value.trim();
     const email = document.getElementById("regEmail").value.trim();
     const track = document.getElementById("regTrack").value;
@@ -24,7 +28,7 @@ window.handleRegistrationSubmit = async function(event) {
         const user = userCredential.user;
 
         const newStudentProfile = {
-            uid: user.uid, // Store the Auth UID inside the document for reference
+            uid: user.uid, // Store the Auth UID inside the document for security/reference
             studentId: assignedStudentId,
             username: fullName,
             email: email,
@@ -47,22 +51,26 @@ window.handleRegistrationSubmit = async function(event) {
             }
         };
 
+        // Saving using assignedStudentId as Document ID
         await setDoc(doc(db, "students", assignedStudentId), newStudentProfile);
 
-        // Send credentials email (non-fatal — student is already saved if this fails)
-        await sendCredentialsEmail(email, fullName, assignedStudentId, generatedPassword);
+        // Conditional Email Sending
+        if (ENABLE_EMAIL_SENDING) {
+            await sendCredentialsEmail(email, fullName, assignedStudentId, generatedPassword);
+        } else {
+            console.warn("Email sending is currently disabled via register.js settings.");
+        }
 
         alert(
             `Application Submitted!\n\n` +
             `Student ID: ${assignedStudentId}\n` +
             `Initial Password: ${generatedPassword}\n\n` +
-            `Check your email for these credentials and log in to complete your application.`
+            `Log in with your email to complete your application.`
         );
-        // FIX: Use clean URL path — "login.html" breaks with cleanUrls: true in vercel.json
+        
         window.location.href = "/login";
 
     } catch (error) {
-        // FIX: Handle modern Firebase error codes with specific, helpful messages
         const errorMessages = {
             'auth/email-already-in-use':   "This email is already linked to an existing application. Please log in instead.",
             'auth/invalid-email':          "The email address you entered is not valid.",
@@ -104,7 +112,6 @@ async function sendCredentialsEmail(targetEmail, studentName, studentId, targetP
         if (response.ok) {
             console.log("Credentials email sent successfully.");
         } else {
-            // Non-fatal: log and move on — student profile is already saved in Firestore
             console.warn("EmailJS responded with status:", response.status);
         }
     } catch (err) {
