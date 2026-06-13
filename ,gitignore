@@ -1,0 +1,8 @@
+# Exclude node modules
+node_modules/
+
+# Exclude environment variables if you ever use them
+.env
+
+# Exclude Firebase Admin keys (if you ever generate one)
+*serviceAccountKey*.json
