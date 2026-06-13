@@ -2,343 +2,98 @@
 <html>
 <head>
 <title>DCSA Admin Portal</title>
-
 <style>
-
-body{
-    background:#f1f5f9;
-    font-family:system-ui;
-    margin:0;
-}
-
-
-header{
-    background:#0f172a;
-    color:white;
-    padding:20px 45px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    border-bottom:5px solid #8b1416;
-}
-
-
-.container{
-
-    max-width:1100px;
-    margin:50px auto;
-    background:white;
-    padding:40px;
-    border-radius:15px;
-    box-shadow:0 10px 30px #0002;
-
-}
-
-
-
-h1{
-    font-size:30px;
-}
-
-
-h2{
-    font-size:28px;
-    color:#0f172a;
-}
-
-
-h3{
-    font-size:22px;
-    color:#8b1416;
-}
-
-
-
-input,select{
-
-padding:12px;
-font-size:16px;
-border:1px solid #cbd5e1;
-border-radius:6px;
-
-}
-
-
-.grid{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
-
-}
-
-
-
-button{
-
-cursor:pointer;
-font-size:16px;
-
-}
-
-
-
-.search{
-
-display:flex;
-gap:10px;
-
-}
-
-
-.search button{
-
-background:#0f172a;
-color:white;
-padding:12px 25px;
-border:0;
-border-radius:6px;
-
-}
-
-
-
-table{
-
-width:100%;
-border-collapse:collapse;
-margin-top:15px;
-font-size:17px;
-
-}
-
-
-th{
-
-background:#0f172a;
-color:white;
-padding:15px;
-
-}
-
-
-td{
-
-border:1px solid #cbd5e1;
-padding:12px;
-
-}
-
-
-
-td input{
-
-width:95%;
-
-}
-
-
-
-.save{
-
-width:100%;
-background:#8b1416;
-color:white;
-padding:18px;
-border:0;
-margin-top:30px;
-font-weight:bold;
-
-}
-
-
-
+body{background:#f1f5f9;font-family:system-ui;margin:0}
+header{background:#0f172a;color:white;padding:20px 45px;display:flex;justify-content:space-between;align-items:center;border-bottom:5px solid #8b1416}
+.container{max-width:1100px;margin:50px auto;background:white;padding:40px;border-radius:15px;box-shadow:0 10px 30px #0002}
+h1{font-size:30px}h2{font-size:28px;color:#0f172a}h3{font-size:22px;color:#8b1416}
+input,select{padding:12px;font-size:16px;border:1px solid #cbd5e1;border-radius:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.search{display:flex;gap:10px}
+.search button,.save{background:#8b1416;color:white;border:0;padding:14px;border-radius:6px}
+.search button{background:#0f172a}
+table{width:100%;border-collapse:collapse;margin-top:15px;font-size:17px}
+th{background:#0f172a;color:white;padding:15px}
+td{border:1px solid #cbd5e1;padding:12px}
+td input{width:95%}
+.save{width:100%;margin-top:30px;font-weight:bold}
 </style>
-
 </head>
-
-
-
 <body>
 
-
-
 <header>
-
 <h1>DCSA ADMIN PORTAL</h1>
-
-<button onclick="logoutAdmin()"
-style="
-background:#8b1416;
-color:white;
-border:0;
-padding:12px 25px;">
-LOGOUT
-</button>
-
-
+<button onclick="logoutAdmin()">LOGOUT</button>
 </header>
-
-
-
 
 <div class="container">
 
-
 <h2>Student Management</h2>
 
-
-
 <div class="search">
-
-
-<input id="searchStudentId"
-placeholder="Student ID / Email / Username"
-style="flex:1">
-
-
-<button onclick="searchStudentProfile()">
-SEARCH
-</button>
-
-
+<input id="searchStudentId" placeholder="Student ID / Email / Username" style="flex:1">
+<button onclick="searchStudentProfile()">SEARCH</button>
 </div>
 
-
-
-
-<form id="adminEditForm"
-style="display:none"
-onsubmit="updateStudentProfile(event)">
-
-
+<form id="adminEditForm" style="display:none" onsubmit="updateStudentProfile(event)">
 
 <h3>Profile</h3>
 
-
 <div class="grid">
-
-
 <input id="adminStudentName" placeholder="Username">
-
-
 <input id="adminStudentEmail" placeholder="Email">
-
-
 <input id="adminStudentStudentId" placeholder="Student ID">
 
-
-
 <select id="adminStudentTrack">
-
 <option value="">Keep Track</option>
 <option value="stem">STEM</option>
 <option value="humss">HUMSS</option>
 <option value="abm">ABM</option>
 <option value="ict">ICT</option>
 <option value="tvl">TVL</option>
-
 </select>
 
-
-
 <select id="adminStudentStatus">
-
 <option value="">Keep Status</option>
 <option>PENDING APPLICATION</option>
 <option>APPROVED</option>
 <option>OFFICIALLY ENROLLED</option>
-
 </select>
 
-
 <input id="adminRegistrationDate">
-
-
 </div>
-
-
-
 
 <h3>Grades</h3>
 
-
 <table>
-
 <thead>
-
-<tr>
-<th>Subject</th>
-<th>Grade</th>
-</tr>
-
+<tr><th>Subject</th><th>Grade</th></tr>
 </thead>
-
-
 <tbody id="gradesTable"></tbody>
-
-
 </table>
-
-
-
-
 
 <h3>Schedule</h3>
 
-
 <table>
-
-
 <thead>
-
-<tr>
-<th>Day</th>
-<th>Schedule</th>
-</tr>
-
+<tr><th>Day</th><th>Schedule</th></tr>
 </thead>
-
-
 <tbody id="scheduleTable"></tbody>
-
-
 </table>
 
-
-
-
-
-<button class="save">
-
-SAVE CHANGES
-
-</button>
-
+<button class="save">SAVE CHANGES</button>
 
 </form>
-
-
-
 </div>
 
-
-
 <script>
-
 function logoutAdmin(){
-
 sessionStorage.removeItem("adminAuthenticated");
-
 location.href="admin-login.html";
-
 }
-
 </script>
 
-
 <script type="module" src="js/admin.js"></script>
-
 
 </body>
 </html>
