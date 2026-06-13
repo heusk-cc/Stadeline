@@ -1,7 +1,7 @@
 import { db } from "./firebase-config.js";
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Ensure the student is logged in, grab their authentication token string
+// Ensure the student is logged in
 const activeStudentId = sessionStorage.getItem("loggedStudentId");
 
 if (!activeStudentId) {
@@ -9,7 +9,6 @@ if (!activeStudentId) {
     window.location.href = "login.html";
 }
 
-// Automatically initialize workspace data compilation on window launch
 window.addEventListener("DOMContentLoaded", () => {
     loadStudentDashboardMetrics();
 });
@@ -20,69 +19,83 @@ async function loadStudentDashboardMetrics() {
         const docSnap = await getDoc(studentDocRef);
 
         if (!docSnap.exists()) {
-            alert("Database Error: Profile document missing from system registry registry.");
+            alert("Database Error: Profile document missing.");
             handleLogout();
             return;
         }
 
         const data = docSnap.data();
 
-        // 1. Populate Profile Identity Node Values
-        document.getElementById("studentName").textContent = data.username || "Not Specified";
-        document.getElementById("studentId").textContent = data.studentId || activeStudentId;
-        document.getElementById("studentTrack").textContent = (data.track || "Unassigned").toUpperCase();
+        // 1. Populate Profile Identity
+        document.getElementById("studentName").textContent = data.username || "Student";
         document.getElementById("studentStatus").textContent = data.enrollmentStatus || "PENDING APPLICATION";
+        
+        // --- NEW: Status Logic (Hide links if PENDING) ---
+        const status = data.enrollmentStatus || "PENDING APPLICATION";
+        if (status === "PENDING APPLICATION") {
+            document.getElementById("nav-dashboard").style.display = "none";
+            document.getElementById("nav-schedule").style.display = "none";
+            document.getElementById("nav-grades").style.display = "none";
+            
+            // Update Home notice
+            document.getElementById("homeNotice").innerHTML = `
+                <strong>Application Status:</strong> Your application is currently under review. Please wait for the admin to verify your records.
+            `;
+        }
 
-        // 2. Compile and Render Academic Report Card Row Nodes
+        // --- NEW: Pre-fill Profile Form if data exists ---
+        if (data.firstName) document.getElementById("profileFirstName").value = data.firstName;
+        if (data.middleName) document.getElementById("profileMiddleName").value = data.middleName;
+        if (data.lastName) document.getElementById("profileLastName").value = data.lastName;
+        if (data.address) document.getElementById("profileAddress").value = data.address;
+        if (data.contact) document.getElementById("profileContact").value = data.contact;
+
+        // 2. Compile and Render Academic Report Card
         const reportCardTableBody = document.getElementById("reportCardContent");
         if (reportCardTableBody) {
-            reportCardTableBody.innerHTML = ""; // Wipe loading spacer text
-
+            reportCardTableBody.innerHTML = "";
             if (data.grades && Object.keys(data.grades).length > 0) {
                 for (const [subject, grade] of Object.entries(data.grades)) {
-                    // Check if grade value is empty, null, or set to "N/A"
-                    const isUngraded = (grade === "N/A" || !grade);
-                    const gradeDisplay = isUngraded ? "Not Graded" : grade;
-                    const gradeStyle = isUngraded 
-                        ? "color: #94a3b8; font-style: italic; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; display: inline-block;" 
-                        : "color: #0f172a; font-weight: bold; background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 4px; display: inline-block;";
-
-                    reportCardTableBody.innerHTML += `
-                        <tr>
-                            <td style="font-weight: 500;">${subject}</td>
-                            <td style="text-align: center;"><span style="${gradeStyle}">${gradeDisplay}</span></td>
-                        </tr>
-                    `;
+                    reportCardTableBody.innerHTML += `<tr><td>${subject}</td><td>${grade}</td></tr>`;
                 }
-            } else {
-                reportCardTableBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #94a3b8;">No academic courses assigned to this record profile.</td></tr>`;
             }
         }
 
-        // 3. Compile and Render Schedule Matrix Blocks
+        // 3. Compile and Render Schedule
         const scheduleContainer = document.getElementById("scheduleContent");
-        if (scheduleContainer) {
-            scheduleContainer.innerHTML = ""; // Wipe loading block
-
-            if (data.schedule && Object.keys(data.schedule).length > 0) {
-                for (const [day, executionTime] of Object.entries(data.schedule)) {
-                    scheduleContainer.innerHTML += `
-                        <div class="schedule-row">
-                            <strong style="color: #0f172a; display: inline-block; width: 100px;">${day}:</strong>
-                            <span style="color: #475569; font-size: 14px;">${executionTime}</span>
-                        </div>
-                    `;
-                }
-            } else {
-                scheduleContainer.innerHTML = `<p style="color: #94a3b8; font-style: italic;">No class scheduling matrix has been established for this block profile.</p>`;
+        if (scheduleContainer && data.schedule) {
+            scheduleContainer.innerHTML = "";
+            for (const [day, time] of Object.entries(data.schedule)) {
+                scheduleContainer.innerHTML += `<div class="schedule-row"><strong>${day}:</strong> ${time}</div>`;
             }
         }
 
     } catch (err) {
-        console.error("Failed to accurately read student metric collection profiles: ", err);
-        alert("Data Connection Refused: Unable to completely fetch server matrices.");
+        console.error("Error loading dashboard: ", err);
     }
 }
+
+// --- NEW: Save Profile Function ---
+window.saveProfile = async function(event) {
+    event.preventDefault();
+
+    const profileData = {
+        firstName: document.getElementById("profileFirstName").value,
+        middleName: document.getElementById("profileMiddleName").value,
+        lastName: document.getElementById("profileLastName").value,
+        address: document.getElementById("profileAddress").value,
+        contact: document.getElementById("profileContact").value
+    };
+
+    try {
+        const studentDocRef = doc(db, "students", activeStudentId);
+        await updateDoc(studentDocRef, profileData);
+        alert("Profile saved successfully!");
+    } catch (err) {
+        console.error("Error updating profile: ", err);
+        alert("Failed to save profile. Please try again.");
+    }
+};
 
 // 4. Handle Password Updates Securely
 window.updatePortalPassword = async function(event) {
