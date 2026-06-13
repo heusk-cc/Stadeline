@@ -1,72 +1,120 @@
-// FIX: Import auth, and Firestore query helpers from firebase-config
-import { db, auth, collection, query, where, getDocs } from "./firebase-config.js";
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// FIX: Import auth from firebase-config instead of calling getAuth() without the app.
+// FIX: Import doc/setDoc from firebase-config to eliminate redundant CDN imports.
+import { db, auth, doc, setDoc } from "./firebase-config.js";
+import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-window.handlePortalLogin = async function(event) {
+window.handleRegistrationSubmit = async function(event) {
     event.preventDefault();
+    
+    // --- EMAIL TOGGLE ---
+    // Change this to 'true' when you are ready to send live emails
+    const ENABLE_EMAIL_SENDING = false; 
 
-    const email = document.getElementById("loginEmail").value.trim();
-    // FIX: Normalize to uppercase so "dcsa-a1234-2627" matches "DCSA-A1234-2627"
-    const studentIdInput = document.getElementById("loginStudentId").value.trim().toUpperCase();
-    // Do NOT .trim() passwords — spaces are valid characters
-    const password = document.getElementById("loginPassword").value;
+    const fullName = document.getElementById("regFullName").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const track = document.getElementById("regTrack").value;
 
-    // FIX: Disable button to prevent duplicate submissions
+    // FIX: Disable button during request to prevent duplicate submissions
     const btn = event.target.querySelector("button[type='submit']");
     btn.disabled = true;
-    btn.textContent = "Signing in…";
-
+    btn.textContent = "Submitting…";
+    
     try {
-        // Step 1: Authenticate with Firebase Auth
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const uniqueIdSuffix = Math.floor(1000 + Math.random() * 9000);
+        const assignedStudentId = `DCSA-A${uniqueIdSuffix}-2627`;
+        const generatedPassword = assignedStudentId; 
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, generatedPassword);
         const user = userCredential.user;
 
-        // Step 2: FIX — Query Firestore by email field instead of document key.
-        // Old documents are keyed by Student ID; new ones by Firebase UID.
-        // Querying by the "email" field works correctly for BOTH formats.
-        const q = query(collection(db, "students"), where("email", "==", email));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-            const studentDoc = querySnapshot.docs[0];
-            const studentData = studentDoc.data();
-
-            // Step 3: Verify that the entered Student ID matches the account on record
-            if (studentData.studentId === studentIdInput) {
-                // Store the actual Firestore document ID (works for both old and new key formats)
-                sessionStorage.setItem("loggedStudentId", studentDoc.id);
-                sessionStorage.setItem("loggedStudentUID", user.uid);
-                alert("Access Granted! Welcome back.");
-                // FIX: Use clean URL — "dashboard.html" breaks with cleanUrls: true in vercel.json
-                window.location.href = "/dashboard";
-            } else {
-                alert("Login Failed: The Student ID does not match this account.");
-                btn.disabled = false;
-                btn.textContent = "Secure Sign In";
+        const newStudentProfile = {
+            uid: user.uid, // Store the Auth UID inside the document for security/reference
+            studentId: assignedStudentId,
+            username: fullName,
+            email: email,
+            track: track,
+            enrollmentStatus: "PENDING APPLICATION", 
+            registrationDate: new Date().toISOString(),
+            grades: {
+                "Oral Communication": "N/A",
+                "General Mathematics": "N/A",
+                "Earth and Life Science": "N/A",
+                "Introduction to World Religions": "N/A",
+                "PE and Health 1": "N/A"
+            },
+            schedule: {
+                "Monday": "08:00 AM - 10:00 AM (Core Class) | 1:00 PM - 3:00 PM (Track Spec)",
+                "Tuesday": "08:00 AM - 10:00 AM (Core Class) | 1:00 PM - 3:00 PM (Track Spec)",
+                "Wednesday": "08:00 AM - 10:00 AM (Core Class)",
+                "Thursday": "08:00 AM - 10:00 AM (Core Class) | 1:00 PM - 3:00 PM (Track Spec)",
+                "Friday": "Asynchronous / Module Day"
             }
+        };
+
+        // Saving using assignedStudentId as Document ID
+        await setDoc(doc(db, "students", assignedStudentId), newStudentProfile);
+
+        // Conditional Email Sending
+        if (ENABLE_EMAIL_SENDING) {
+            await sendCredentialsEmail(email, fullName, assignedStudentId, generatedPassword);
         } else {
-            alert("Login Failed: No student profile found for this account. Please contact the registrar.");
-            btn.disabled = false;
-            btn.textContent = "Secure Sign In";
+            console.warn("Email sending is currently disabled via register.js settings.");
         }
 
-    } catch (error) {
-        console.error("Authentication Error:", error);
+        alert(
+            `Application Submitted!\n\n` +
+            `Student ID: ${assignedStudentId}\n` +
+            `Initial Password: ${generatedPassword}\n\n` +
+            `Log in with your email to complete your application.`
+        );
+        
+        window.location.href = "/login";
 
-        // FIX: Cover modern Firebase error codes (v9+ uses auth/invalid-credential
-        // instead of the older auth/wrong-password + auth/user-not-found split)
+    } catch (error) {
         const errorMessages = {
-            'auth/invalid-credential':     "Login Failed: Incorrect email or password.",
-            'auth/user-not-found':         "Login Failed: No account found with this email.",
-            'auth/wrong-password':         "Login Failed: Incorrect password.",
-            'auth/invalid-email':          "Login Failed: The email address is not valid.",
-            'auth/user-disabled':          "Login Failed: This account has been disabled. Contact the registrar.",
-            'auth/too-many-requests':      "Too many failed attempts. Please wait a moment and try again.",
+            'auth/email-already-in-use':   "This email is already linked to an existing application. Please log in instead.",
+            'auth/invalid-email':          "The email address you entered is not valid.",
+            'auth/weak-password':          "The generated password was rejected. Please try again.",
             'auth/network-request-failed': "Network error. Please check your connection and try again.",
         };
 
-        alert(errorMessages[error.code] ?? "Login Failed: An unexpected error occurred. Please try again.");
+        const message = errorMessages[error.code];
+        if (message) {
+            alert(`Registration Error:\n${message}`);
+        } else {
+            console.error("Registration failed:", error);
+            alert("Registration Failed. Please try again. If this continues, contact the registrar.");
+        }
+
         btn.disabled = false;
-        btn.textContent = "Secure Sign In";
+        btn.textContent = "Submit Admission File";
     }
 };
+
+async function sendCredentialsEmail(targetEmail, studentName, studentId, targetPassword) {
+    const payload = {
+        service_id: "service_61yzay9",
+        template_id: "template_nryyu35",
+        user_id: "DDVLZbYjEeonKEVG2",
+        template_params: {
+            to_email: targetEmail,
+            applicant_name: studentName,
+            student_id: studentId,
+            generated_password: targetPassword
+        }
+    };
+    try {
+        const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+            console.log("Credentials email sent successfully.");
+        } else {
+            console.warn("EmailJS responded with status:", response.status);
+        }
+    } catch (err) {
+        console.error("Network error sending credentials email:", err);
+    }
+}
