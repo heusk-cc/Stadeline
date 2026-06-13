@@ -17,42 +17,86 @@
         <button onclick="logoutAdmin()" style="background: #8b1416; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">LOG OUT</button>
     </header>
 
-    <div style="max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <div style="max-width: 980px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
         <h2 style="color: #0f172a; border-bottom: 3px solid #8b1416; padding-bottom: 10px; text-transform: uppercase;">
             Account Registry Control Panel
         </h2>
 
-        <table style="width:100%;margin:20px 0"><tbody id="studentList"></tbody></table><div style="margin: 20px 0; display: flex; gap: 10px;">
-            <input type="text" id="searchStudentId" placeholder="Enter Student ID (e.g., DCSA-A1234-2627)" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+        <p style="margin: 12px 0 0; color: #475569; font-size: 14px;">
+            Search by Firestore Doc ID, Student ID, UID, Email, or Username. Leave any field blank to keep the current value.
+        </p>
+
+        <div style="margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="searchStudentId" placeholder="Enter Student ID / UID / Email / Username" style="flex: 1; min-width: 260px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
             <button onclick="searchStudentProfile()" style="background: #0f172a; color: white; padding: 0 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Search Record</button>
         </div>
+
+        <div id="searchStatus" style="display:none; margin: 10px 0 20px; padding: 12px 14px; border-radius: 6px; background: #eff6ff; color: #1e3a8a; font-size: 14px;"></div>
 
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0;">
 
         <form id="adminEditForm" style="display: none;" onsubmit="updateStudentProfile(event)">
             <h3 style="color: #8b1416; margin-bottom: 20px;">Account File Customization</h3>
-            
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div>
-                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Full Applicant Name</label>
-                    <input type="text" id="adminStudentId" placeholder="Student ID"><input type="text" id="adminStudentTrack" placeholder="Track"><textarea id="adminGrades" placeholder="Grades JSON"></textarea><textarea id="adminSchedule" placeholder="Schedule JSON"></textarea><input type="text" id="adminStudentName" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Firestore Doc ID</label>
+                    <input type="text" id="adminStudentFirestoreId" readonly style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc; font-family: monospace;">
                 </div>
+
                 <div>
-                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Account Web Password</label>
-                    <input type="text" id="adminStudentPassword" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Username / Full Name</label>
+                    <input type="text" id="adminStudentName" placeholder="Leave blank to keep current value" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
                 </div>
+
                 <div>
                     <label style="display: block; margin-bottom: 6px; font-weight: 600;">Registered Email Desk</label>
-                    <input type="email" id="adminStudentEmail" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                    <input type="email" id="adminStudentEmail" placeholder="Leave blank to keep current value" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
                 </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Student ID</label>
+                    <input type="text" id="adminStudentStudentId" placeholder="Leave blank to keep current value" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Track</label>
+                    <input type="text" id="adminStudentTrack" placeholder="Leave blank to keep current value" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; text-transform: lowercase;">
+                </div>
+
                 <div>
                     <label style="display: block; margin-bottom: 6px; font-weight: 600;">Admissions Processing Status</label>
                     <select id="adminStudentStatus" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; background: #fff;">
+                        <option value="">-- Keep Current Status --</option>
                         <option value="PENDING APPLICATION">PENDING APPLICATION</option>
                         <option value="OFFICIALLY ENROLLED">OFFICIALLY ENROLLED</option>
+                        <option value="APPROVED">APPROVED</option>
                         <option value="REJECTED / INCOMPLETE">REJECTED / INCOMPLETE</option>
                     </select>
                 </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Registration Date</label>
+                    <input type="text" id="adminRegistrationDate" placeholder="Leave blank to keep current value" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Grades (JSON object)</label>
+                <textarea id="adminStudentGrades" rows="8" placeholder='Example:
+{
+  "Earth and Life Science": "N/A",
+  "General Mathematics": "N/A"
+}' style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; resize: vertical;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Schedule (JSON object)</label>
+                <textarea id="adminStudentSchedule" rows="8" placeholder='Example:
+{
+  "Monday": "08:00 AM - 10:00 AM (Core Class)",
+  "Friday": "Asynchronous / Module Day"
+}' style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; resize: vertical;"></textarea>
             </div>
 
             <button type="submit" style="background: #8b1416; color: white; width: 100%; padding: 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -62,13 +106,11 @@
     </div>
 
     <script>
-        // Logout functionality to clear admin session
         function logoutAdmin() {
             sessionStorage.removeItem("adminAuthenticated");
             window.location.href = "admin-login.html";
         }
 
-        // Security check: Redirect to admin-login.html if not authenticated
         if (sessionStorage.getItem("adminAuthenticated") !== "true") {
             window.location.href = "admin-login.html";
         }
