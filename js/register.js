@@ -1,4 +1,7 @@
-import { db, doc, setDoc, collection, query, where, getDocs } from "./firebase-config.js";
+// FIX: Import auth from firebase-config instead of calling getAuth() without the app.
+// FIX: Import doc/setDoc from firebase-config to eliminate redundant CDN imports.
+import { db, auth, doc, setDoc } from "./firebase-config.js";
+import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 window.handleRegistrationSubmit = async function(event) {
     event.preventDefault();
@@ -6,26 +9,22 @@ window.handleRegistrationSubmit = async function(event) {
     const fullName = document.getElementById("regFullName").value.trim();
     const email = document.getElementById("regEmail").value.trim();
     const track = document.getElementById("regTrack").value;
+
+    // FIX: Disable button during request to prevent duplicate submissions
+    const btn = event.target.querySelector("button[type='submit']");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
     
     try {
-        // 1. Check for duplicate email
-        const emailQuery = query(collection(db, "students"), where("email", "==", email));
-        const emailSnapshot = await getDocs(emailQuery);
-        
-        if (!emailSnapshot.empty) {
-            alert("Registration Error:\nThis email address is already tied to an official application profile.");
-            return;
-        }
-
-        // 2. Generate Credentials
         const uniqueIdSuffix = Math.floor(1000 + Math.random() * 9000);
         const assignedStudentId = `DCSA-A${uniqueIdSuffix}-2627`;
         const generatedPassword = assignedStudentId; 
 
-        // 3. Construct Student Profile
+        const userCredential = await createUserWithEmailAndPassword(auth, email, generatedPassword);
+        const user = userCredential.user;
+
         const newStudentProfile = {
             studentId: assignedStudentId,
-            password: generatedPassword, 
             username: fullName,
             email: email,
             track: track,
@@ -47,30 +46,47 @@ window.handleRegistrationSubmit = async function(event) {
             }
         };
 
-        // 4. Save to Firestore
-        await setDoc(doc(db, "students", assignedStudentId), newStudentProfile);
+        await setDoc(doc(db, "students", user.uid), newStudentProfile);
 
-        // 5. Send to EmailJS
+        // Send credentials email (non-fatal — student is already saved if this fails)
         await sendCredentialsEmail(email, fullName, assignedStudentId, generatedPassword);
 
-        alert(`Application Submitted!\n\nStudent ID: ${assignedStudentId}\nPassword: ${generatedPassword}\n\nCheck your email and log in to complete your application.`);
-        window.location.href = "login.html";
+        alert(
+            `Application Submitted!\n\n` +
+            `Student ID: ${assignedStudentId}\n` +
+            `Initial Password: ${generatedPassword}\n\n` +
+            `Check your email for these credentials and log in to complete your application.`
+        );
+        // FIX: Use clean URL path — "login.html" breaks with cleanUrls: true in vercel.json
+        window.location.href = "/login";
 
     } catch (error) {
-        console.error("Registration failed: ", error);
-        alert("Transaction Failed. Connection interrupted. Check Console for details.");
+        // FIX: Handle modern Firebase error codes with specific, helpful messages
+        const errorMessages = {
+            'auth/email-already-in-use':   "This email is already linked to an existing application. Please log in instead.",
+            'auth/invalid-email':          "The email address you entered is not valid.",
+            'auth/weak-password':          "The generated password was rejected. Please try again.",
+            'auth/network-request-failed': "Network error. Please check your connection and try again.",
+        };
+
+        const message = errorMessages[error.code];
+        if (message) {
+            alert(`Registration Error:\n${message}`);
+        } else {
+            console.error("Registration failed:", error);
+            alert("Registration Failed. Please try again. If this continues, contact the registrar.");
+        }
+
+        btn.disabled = false;
+        btn.textContent = "Submit Admission File";
     }
 };
 
 async function sendCredentialsEmail(targetEmail, studentName, studentId, targetPassword) {
-    const serviceId = "service_61yzay9"; 
-    const templateId = "template_nryyu35";
-    const publicKey = "DDVLZbYjEeonKEVG2";
-
     const payload = {
-        service_id: serviceId,
-        template_id: templateId,
-        user_id: publicKey,
+        service_id: "service_61yzay9",
+        template_id: "template_nryyu35",
+        user_id: "DDVLZbYjEeonKEVG2",
         template_params: {
             to_email: targetEmail,
             applicant_name: studentName,
@@ -78,21 +94,19 @@ async function sendCredentialsEmail(targetEmail, studentName, studentId, targetP
             generated_password: targetPassword
         }
     };
-
     try {
         const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("EmailJS Server Error:", errorText);
+        if (response.ok) {
+            console.log("Credentials email sent successfully.");
         } else {
-            console.log("Email sent successfully!");
+            // Non-fatal: log and move on — student profile is already saved in Firestore
+            console.warn("EmailJS responded with status:", response.status);
         }
     } catch (err) {
-        console.error("Network error connecting to EmailJS: ", err);
+        console.error("Network error sending credentials email:", err);
     }
 }

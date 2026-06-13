@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDmsHZjHTCoG6PLiD-Td2G7_7TjyXbuGSE",
@@ -13,10 +14,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app); // FIX: Initialize auth with the app instance and export it
 
-// EXPORT all functions needed across your app
 export { 
-    db, 
+    app,
+    db,
+    auth,
     doc, 
     getDoc, 
     updateDoc, 
