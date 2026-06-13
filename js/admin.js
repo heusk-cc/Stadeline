@@ -1,5 +1,5 @@
 import { db } from "./firebase-config.js";
-import { collection, getDocs, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const subjects = [
   "Earth and Life Science",
@@ -131,32 +131,6 @@ function fillForm(studentId, data) {
   });
 }
 
-// POST ANNOUNCEMENT FEATURE
-window.postAnnouncement = async function() {
-  const input = document.getElementById("announcementText");
-  const text = trim(input?.value);
-
-  if (!text) {
-    alert("Please enter an announcement message.");
-    return;
-  }
-
-  setStatus("Posting announcement...");
-  try {
-    await addDoc(collection(db, "announcements"), {
-        message: text,
-        timestamp: new Date().toISOString()
-    });
-    input.value = "";
-    setStatus("Announcement posted successfully!", "success");
-    alert("Announcement broadcasted to student dashboards!");
-  } catch (error) {
-    console.error(error);
-    setStatus("Failed to post announcement.", "error");
-    alert(error.message || "Failed to post announcement.");
-  }
-};
-
 window.searchStudentProfile = async function () {
   const input = document.getElementById("searchStudentId");
   const searchValue = trim(input?.value);
@@ -188,6 +162,38 @@ window.searchStudentProfile = async function () {
   }
 };
 
+// HELPER PIPELINE: Sends API request directly to EmailJS REST endpoints
+async function sendEnrollmentStatusEmail(targetEmail, studentName, studentId) {
+  const payload = {
+    service_id: "service_61yzay9",            // Auto-linked from your login.js configurations
+    template_id: "template_d6z7jve", // TODO: Put your specific EmailJS Enrollment Notification Template ID here
+    user_id: "DDVLZbYjEeonKEVG2",               // Auto-linked from your login.js configurations
+    template_params: {
+      to_email: targetEmail,
+      applicant_name: studentName,
+      student_id: studentId,
+      status: "OFFICIALLY ENROLLED"
+    }
+  };
+
+  try {
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      console.log("Enrollment success email dispatched successfully.");
+    } else {
+      const errResponseText = await response.text();
+      console.warn("EmailJS Service rejected submission payload:", response.status, errResponseText);
+    }
+  } catch (err) {
+    console.error("Network interface breakdown contacting EmailJS endpoints:", err);
+  }
+}
+
 window.updateStudentProfile = async function (event) {
   event.preventDefault();
 
@@ -199,7 +205,6 @@ window.updateStudentProfile = async function (event) {
   try {
     const updates = {};
     const current = currentStudentData || {};
-    const previousStatus = current.enrollmentStatus;
 
     const username = trim(document.getElementById("adminStudentName").value);
     const email = trim(document.getElementById("adminStudentEmail").value);
@@ -251,25 +256,16 @@ window.updateStudentProfile = async function (event) {
       return;
     }
 
-    // UPDATE FIRESTORE
     await updateDoc(doc(db, "students", currentDocId), updates);
 
-    // TRIGGER EMAILJS IF STATUS CHANGES TO "OFFICIALLY ENROLLED"
-    if (updates.enrollmentStatus === "OFFICIALLY ENROLLED" && previousStatus !== "OFFICIALLY ENROLLED") {
-        const targetEmail = updates.email || current.email;
-        const targetName = updates.username || current.username;
-        const targetId = updates.studentId || current.studentId;
-
-        if (targetEmail && typeof emailjs !== 'undefined') {
-            // IMPORTANT: Replace SERVICE_ID and TEMPLATE_ID with your actual EmailJS keys
-            emailjs.send("service_61yzay9", "template_d6z7jve", {
-                to_email: targetEmail,
-                applicant_name: targetName,
-                student_id: targetId
-            })
-            .then(() => console.log("Enrollment Email dispatched successfully to: " + targetEmail))
-            .catch(err => console.error("EmailJS Error:", err));
-        }
+    // --- TRIGGER EMAIL ACTIONS ON STATUS ALTERATIONS ---
+    if (status === "OFFICIALLY ENROLLED" && current.enrollmentStatus !== "OFFICIALLY ENROLLED") {
+      setStatus("Saving records and sending verification email...", "info");
+      await sendEnrollmentStatusEmail(
+        email || current.email,
+        username || current.username,
+        studentId || current.studentId
+      );
     }
 
     currentStudentData = {
