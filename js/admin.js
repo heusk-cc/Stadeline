@@ -7,65 +7,89 @@ import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.
 let currentActiveEditingId = "";
 
 window.searchStudentProfile = async function() {
-    const searchId = document.getElementById("searchStudentId").value.trim();
-    
-    if (!searchId) {
-        alert("Action Cancelled:\nPlease input a valid Student ID sequence.");
-        return;
-    }
+    const searchBtn = document.querySelector("button[onclick='searchStudentProfile()']");
+    searchBtn.disabled = true;
+    searchBtn.textContent = "Searching...";
 
     try {
+        const searchId =
+            document.getElementById("searchStudentId").value.trim();
+
+        if (!searchId) {
+            alert("Enter a Student ID.");
+            return;
+        }
+
         const studentDocRef = doc(db, "students", searchId);
         const docSnap = await getDoc(studentDocRef);
 
         if (!docSnap.exists()) {
-            alert(`Record Search Failure:\nNo account entry exists for ID: ${searchId}`);
+            alert("Student not found.");
             document.getElementById("adminEditForm").style.display = "none";
             return;
         }
 
         const data = docSnap.data();
-        currentActiveEditingId = searchId; // Hold the ID in memory
 
-        // Populate the input forms with current database records
-        document.getElementById("adminStudentName").value = data.username || "";
-        document.getElementById("adminStudentPassword").value = data.password || "";
-        document.getElementById("adminStudentEmail").value = data.email || "";
-        document.getElementById("adminStudentStatus").value = data.enrollmentStatus || "PENDING APPLICATION";
+        currentActiveEditingId = searchId;
 
-        // Display the form area smoothly
+        document.getElementById("adminStudentName").value =
+            data.username || "";
+
+        document.getElementById("adminStudentPassword").value =
+            data.password || "";
+
+        document.getElementById("adminStudentEmail").value =
+            data.email || "";
+
+        document.getElementById("adminStudentStatus").value =
+            data.enrollmentStatus || "PENDING APPLICATION";
+
         document.getElementById("adminEditForm").style.display = "block";
 
     } catch (error) {
-        console.error("Admin dataset lookup query error: ", error);
-        alert("Database transaction timeout error.");
+        console.error(error);
+        alert("Unable to fetch student record.");
+    } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = "Search Record";
     }
 };
 
 window.updateStudentProfile = async function(event) {
     event.preventDefault();
 
-    if (!currentActiveEditingId) return;
+    if (!currentActiveEditingId) {
+        alert("No student selected.");
+        return;
+    }
 
-    const updatedName = document.getElementById("adminStudentName").value.trim();
-    const updatedPassword = document.getElementById("adminStudentPassword").value.trim();
-    const updatedEmail = document.getElementById("adminStudentEmail").value.trim();
-    const updatedStatus = document.getElementById("adminStudentStatus").value;
+    const updates = {};
+
+    const name = document.getElementById("adminStudentName").value.trim();
+    const password = document.getElementById("adminStudentPassword").value.trim();
+    const email = document.getElementById("adminStudentEmail").value.trim();
+    const status = document.getElementById("adminStudentStatus").value;
+
+    if (name !== "") updates.username = name;
+    if (password !== "") updates.password = password;
+    if (email !== "") updates.email = email;
+
+    updates.enrollmentStatus = status;
 
     try {
         const docRef = doc(db, "students", currentActiveEditingId);
-        
-        // Write updates back onto the target database node
-        await updateDoc(docRef, {
-            username: updatedName,
-            password: updatedPassword,
-            email: updatedEmail,
-            enrollmentStatus: updatedStatus
-        });
 
-        alert(`Database Sync Complete:\nAccount settings for ${currentActiveEditingId} successfully altered.`);
+        await updateDoc(docRef, updates);
+
+        alert("Student record updated successfully.");
     } catch (error) {
-        console.error("Admin document patch failure: ", error);
-        alert("Write operation rejected by Cloud access controls.");
+        console.error(error);
+
+        if (error.code === "permission-denied") {
+            alert("Firestore rules blocked this update.");
+        } else {
+            alert(error.message);
+        }
     }
 };
