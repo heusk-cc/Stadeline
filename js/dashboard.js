@@ -1,254 +1,113 @@
-import { 
-    db 
-} from "./firebase-config.js";
+import { db } from "./firebase-config.js";
+import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-    doc,
-    onSnapshot,
-    updateDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const activeStudentId = sessionStorage.getItem("loggedStudentId");
 
-
-const studentUID = sessionStorage.getItem("loggedStudentId");
-
-
-if (!studentUID) {
+if (!activeStudentId) {
     window.location.href = "login.html";
 }
 
+window.addEventListener("DOMContentLoaded", loadStudentDashboard);
 
-// DOM Loaded
-window.addEventListener("DOMContentLoaded", () => {
+function loadStudentDashboard() {
+    const ref = doc(db, "students", activeStudentId);
 
-    loadStudent();
-
-});
-
-
-
-function loadStudent() {
-
-    const studentRef = doc(db, "students", studentUID);
-
-
-    onSnapshot(studentRef, (snapshot)=>{
-
-
-        if(!snapshot.exists()){
-
-            alert("Student record not found.");
+    onSnapshot(ref, (snap) => {
+        if (!snap.exists()) {
+            alert("Student profile not found.");
+            handleLogout();
             return;
-
         }
 
-
-        const data = snapshot.data();
-
-
-
-        // Identity
+        const data = snap.data();
 
         setText("studentName", data.username);
         setText("studentStatus", data.enrollmentStatus);
         setText("studentId", data.studentId);
-        setText("studentTrack", data.track?.toUpperCase());
+        setText("studentTrack", String(data.track || "N/A").toUpperCase());
 
+        const pending = data.enrollmentStatus === "PENDING APPLICATION";
 
+        ["nav-dashboard", "nav-schedule", "nav-grades"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = pending ? "none" : "block";
+        });
 
-        // Status
-
-        if(data.enrollmentStatus === "PENDING APPLICATION"){
-
-            hidePendingSections();
-
-            document.getElementById("homeNotice").innerHTML =
-            `
-            <strong>Pending Application</strong><br>
-            Your registration is waiting for admin verification.
+        const notice = document.getElementById("homeNotice");
+        if (notice && pending) {
+            notice.innerHTML = `
+            <strong>Application Status:</strong><br>
+            Your application is currently under review.
             `;
-
         }
 
-
-
-        // Grades
-
-        renderGrades(data.grades);
-
-
-
-        // Schedule
-
-        renderSchedule(data.schedule);
-
-
-
-        // Profile
-
         fillProfile(data);
-
-
+        renderGrades(data.grades);
+        renderSchedule(data.schedule);
     });
-
 }
 
+function renderGrades(grades) {
+    const table = document.getElementById("reportCardContent");
+    if (!table || !grades) return;
 
+    table.innerHTML = "";
 
-
-function renderGrades(grades){
-
-
-    const table =
-    document.getElementById("reportCardContent");
-
-
-    if(!table || !grades) return;
-
-
-
-    table.innerHTML="";
-
-
-    Object.entries(grades).forEach(([subject,grade])=>{
-
-
-        table.innerHTML +=
-        `
+    Object.entries(grades).forEach(([subject, grade]) => {
+        table.innerHTML += `
         <tr>
             <td>${subject}</td>
             <td>${grade}</td>
-        </tr>
-        `;
-
-
+        </tr>`;
     });
-
-
 }
 
+function renderSchedule(schedule) {
+    const box = document.getElementById("scheduleContent");
+    if (!box || !schedule) return;
 
+    box.innerHTML = "";
 
-
-function renderSchedule(schedule){
-
-
-    const box =
-    document.getElementById("scheduleContent");
-
-
-    if(!box || !schedule) return;
-
-
-    box.innerHTML="";
-
-
-    Object.entries(schedule).forEach(([day,time])=>{
-
-
-        box.innerHTML +=
-        `
+    Object.entries(schedule).forEach(([day, time]) => {
+        box.innerHTML += `
         <div class="schedule-row">
-            <b>${day}</b>
-            <br>
+            <strong>${day}</strong><br>
             ${time}
-        </div>
-        `;
-
-
+        </div>`;
     });
-
-
 }
 
+function fillProfile(data) {
+    const fields = ["firstName","middleName","lastName","address","contact"];
 
-
-
-function fillProfile(data){
-
-
-    if(document.getElementById("profileFirstName"))
-    document.getElementById("profileFirstName").value =
-    data.firstName || "";
-
-
-    if(document.getElementById("profileLastName"))
-    document.getElementById("profileLastName").value =
-    data.lastName || "";
-
-}
-
-
-
-function hidePendingSections(){
-
-
-    [
-        "nav-dashboard",
-        "nav-schedule",
-        "nav-grades"
-
-    ].forEach(id=>{
-
-        const el=document.getElementById(id);
-
-        if(el)
-        el.style.display="none";
-
+    fields.forEach(field => {
+        const el = document.getElementById("profile" + field.charAt(0).toUpperCase() + field.slice(1));
+        if (el) el.value = data[field] || "";
     });
-
-
 }
-
-
-
 
 function setText(id,value){
-
     const el=document.getElementById(id);
-
-    if(el)
-    el.textContent=value || "N/A";
-
+    if(el) el.textContent=value || "N/A";
 }
 
+window.saveProfile = async function(event){
+    event.preventDefault();
 
-
-
-window.saveProfile = async function(e){
-
-    e.preventDefault();
-
-
-    const ref =
-    doc(db,"students",studentUID);
-
-
+    const ref = doc(db,"students",activeStudentId);
 
     await updateDoc(ref,{
-
-        firstName:
-        document.getElementById("profileFirstName").value,
-
-
-        lastName:
-        document.getElementById("profileLastName").value
-
+        firstName: document.getElementById("profileFirstName").value,
+        middleName: document.getElementById("profileMiddleName").value,
+        lastName: document.getElementById("profileLastName").value,
+        address: document.getElementById("profileAddress").value,
+        contact: document.getElementById("profileContact").value
     });
 
-
-
-    alert("Profile updated");
-
+    alert("Profile updated!");
 };
 
-
-
-
-
 window.handleLogout=function(){
-
     sessionStorage.removeItem("loggedStudentId");
-
     location.href="login.html";
-
 };
