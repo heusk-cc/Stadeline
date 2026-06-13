@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DCSA SIS | Student Portal</title>
+    <link rel="icon" type="image/x-icon" href="assets/round-logo.png">
     <style>
         :root { --primary: #8b1416; --dark: #0f172a; --slate: #475569; --light: #f8fafc; --border: #e2e8f0; }
         body { background-color: #f1f5f9; font-family: system-ui, sans-serif; margin: 0; padding: 20px; color: var(--dark); }
@@ -11,9 +12,9 @@
         .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; }
         .card-title { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--primary); text-transform: uppercase; }
         
-        .portal-header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: var(--dark); color: white; padding: 10px 20px; height: 30px; border-radius: 8px; border-left: 6px solid var(--primary); }
+        .portal-header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: var(--dark); color: white; padding: 8px 20px; border-radius: 8px; border-left: 6px solid var(--primary); }
         .header-brand { display: flex; align-items: center; gap: 12px; }
-        .header-brand img { height: 35px; width: 35px; border-radius: 4px; }
+        .header-brand img { height: 32px; width: 32px; border-radius: 4px; object-fit: cover; }
         
         .nav-link { display: block; padding: 12px; color: var(--dark); text-decoration: none; font-weight: 600; cursor: pointer; border-radius: 4px; transition: 0.2s; }
         .nav-link:hover { background: var(--light); color: var(--primary); }
@@ -21,8 +22,11 @@
         .content-section { display: none; }
         #home { display: block; } 
         .status-badge { padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; background: #fee2e2; color: var(--primary); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; }
+        
+        /* Form Styling */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; }
+        .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -40,9 +44,11 @@
         <nav class="card">
             <h2 class="card-title">Navigation</h2>
             <a class="nav-link" onclick="showSection('home')">Home</a>
-            <a class="nav-link" onclick="showSection('dashboard')">Dashboard</a>
-            <a class="nav-link" onclick="showSection('schedule')">Schedule</a>
-            <a class="nav-link" onclick="showSection('grades')">Academic Grade</a>
+            <!-- Links to be hidden if status is PENDING -->
+            <a id="nav-dashboard" class="nav-link" onclick="showSection('dashboard')">Dashboard</a>
+            <a id="nav-schedule" class="nav-link" onclick="showSection('schedule')">Schedule</a>
+            <a id="nav-grades" class="nav-link" onclick="showSection('grades')">Academic Grade</a>
+            
             <a class="nav-link" onclick="showSection('profile')">Profile</a>
             <a class="nav-link" onclick="showSection('account')">Account</a>
         </nav>
@@ -53,7 +59,7 @@
         <div id="home" class="content-section card">
             <h2>Welcome back, <span id="studentName">Student</span></h2>
             <p>Your current status: <span id="studentStatus" class="status-badge">Loading...</span></p>
-            <div style="background:#f8fafc; padding:15px; border-radius:4px; border-left:4px solid var(--primary);">
+            <div id="homeNotice" style="background:#f8fafc; padding:15px; border-radius:4px; border-left:4px solid var(--primary);">
                 <strong>Portal Update:</strong> Ensure your profile information is current for the upcoming term.
             </div>
         </div>
@@ -61,42 +67,46 @@
         <!-- Dashboard -->
         <div id="dashboard" class="content-section card">
             <h2>Dashboard Overview</h2>
-            <p>Quick access to your academic journey.</p>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="padding:15px; border:1px solid var(--border); border-radius:4px;">
-                    <strong>Student ID</strong><br><span id="studentId">Loading...</span>
-                </div>
-                <div style="padding:15px; border:1px solid var(--border); border-radius:4px;">
-                    <strong>Academic Track</strong><br><span id="studentTrack">Loading...</span>
-                </div>
-            </div>
+            <p>Welcome to your academic hub.</p>
         </div>
 
         <!-- Schedule -->
         <div id="schedule" class="content-section card">
             <h2 class="card-title">Weekly Schedule</h2>
-            <div id="scheduleContent">Loading schedule matrices...</div>
+            <div id="scheduleContent"></div>
         </div>
 
         <!-- Grades -->
         <div id="grades" class="content-section card">
             <h2 class="card-title">Report Card</h2>
-            <table><thead><tr><th>Subject</th><th>Grade</th></tr></thead><tbody id="reportCardContent"></tbody></table>
+            <div id="reportCardContent"></div>
         </div>
 
         <!-- Profile -->
         <div id="profile" class="content-section card">
             <h2 class="card-title">My Profile</h2>
-            <div id="profileDetails"><p>Full profile data connected to your student records.</p></div>
+            <p>Please keep your information up to date.</p>
+            <form id="profileForm" onsubmit="saveProfile(event)">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="profileFirstName" placeholder="First Name" required>
+                    <input type="text" id="profileMiddleName" placeholder="Middle Name">
+                    <input type="text" id="profileLastName" placeholder="Last Name" required>
+                </div>
+                <input type="text" id="profileAddress" placeholder="Home Address" required style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px;">
+                <input type="tel" id="profileContact" placeholder="Contact Number" required style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px;">
+                
+                <button type="submit" style="width: 100%; padding: 12px; background: var(--dark); color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">
+                    Save Profile Information
+                </button>
+            </form>
         </div>
 
         <!-- Account -->
         <div id="account" class="content-section card">
             <h2 class="card-title">Account Security</h2>
-            <form id="passwordChangeForm" onsubmit="updatePortalPassword(event)">
-                <input type="password" id="newPassword" placeholder="New Password" style="width:100%; padding:10px; margin-bottom:10px;">
-                <input type="password" id="confirmPassword" placeholder="Confirm Password" style="width:100%; padding:10px; margin-bottom:10px;">
-                <button type="submit" style="width:100%; padding:10px; background:var(--dark); color:white; border:none; cursor:pointer;">Update Password</button>
+            <form onsubmit="updatePortalPassword(event)">
+                <input type="password" id="newPassword" placeholder="New Password" required>
+                <button type="submit" class="save-btn">Update Password</button>
             </form>
         </div>
     </main>
@@ -106,6 +116,18 @@
     function showSection(sectionId) {
         document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
         document.getElementById(sectionId).style.display = 'block';
+    }
+
+    // Logic to handle "Pending Application" UI restrictions
+    function checkUserStatus(status) {
+        if (status === 'PENDING APPLICATION') {
+            document.getElementById('nav-dashboard').style.display = 'none';
+            document.getElementById('nav-schedule').style.display = 'none';
+            document.getElementById('nav-grades').style.display = 'none';
+            document.getElementById('homeNotice').innerHTML = `
+                <strong>Application Status:</strong> Your application is currently under review. Please wait for the admin to verify your records.
+            `;
+        }
     }
 </script>
 <script type="module" src="js/dashboard.js"></script>

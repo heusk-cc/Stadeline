@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Poppins:wght=400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/x-icon" href="assets/round-logo.png">
 </head>
 <body>
 
@@ -31,8 +32,8 @@
             <h2>Contact Admissions</h2>
             <p class="panel-sub">Reach out to our campus registrar for enrollment assistance</p>
             
-            <!-- Updated action and method to connect to Web3Forms -->
-            <form action="https://api.web3forms.com/submit" method="POST">
+            <!-- Added id="inquiryForm" to target it with Javascript -->
+            <form id="inquiryForm" action="https://api.web3forms.com/submit" method="POST">
                 
                 <!-- Your Web3Forms Access Key -->
                 <input type="hidden" name="access_key" value="90c04940-a4cf-4126-b717-ddd71154e0bb">
@@ -44,8 +45,7 @@
                     <label>Full Name</label>
                     <div class="input-container">
                         <i class="fa-solid fa-user"></i>
-                        <!-- Added name="name" -->
-                        <input type="text" name="name" placeholder="John Doe" required>
+                        <input type="text" name="name" placeholder="Juan Dela Cruz" required>
                     </div>
                 </div>
 
@@ -53,7 +53,6 @@
                     <label>Active Email Address</label>
                     <div class="input-container">
                         <i class="fa-solid fa-envelope"></i>
-                        <!-- Added name="email" -->
                         <input type="email" name="email" placeholder="example@domain.com" required>
                     </div>
                 </div>
@@ -61,16 +60,63 @@
                 <div class="form-group">
                     <label>Inquiry Message</label>
                     <div class="input-container">
-                        <!-- Added name="message" -->
                         <textarea name="message" rows="4" placeholder="Ask about tuition fees, requirements submission, or schedule evaluations..." required></textarea>
                     </div>
                 </div>
 
-                <button type="submit" class="form-action-btn">Submit Inquiry</button>
+                <button type="submit" id="submitBtn" class="form-action-btn">Submit Inquiry</button>
             </form>
         </div>
     </div>
 
     <script src="js/main.js" defer></script>
+    
+    <!-- Seamless Form Submission Script (AJAX) -->
+    <script>
+        const form = document.getElementById('inquiryForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevents the default browser redirect
+
+            // Change button text to show it's working
+            submitBtn.textContent = 'Sending...';
+            submitBtn.style.opacity = '0.7';
+            submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+            const object = Object.fromEntries(formData);
+            const json = JSON.stringify(object);
+
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: json
+            })
+            .then(async (response) => {
+                let json = await response.json();
+                if (response.status == 200) {
+                    alert("Success! Your inquiry has been sent to the Admissions office.");
+                    form.reset(); // Clear the form fields
+                } else {
+                    console.log(response);
+                    alert("Error: Something went wrong. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                alert("Error: Unable to connect to the email server.");
+            })
+            .finally(() => {
+                // Reset button text and state
+                submitBtn.textContent = 'Submit Inquiry';
+                submitBtn.style.opacity = '1';
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
 </body>
 </html>
