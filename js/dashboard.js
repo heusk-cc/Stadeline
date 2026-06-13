@@ -7,7 +7,9 @@ if (!activeStudentId) {
     window.location.href = "login.html";
 }
 
-window.addEventListener("DOMContentLoaded", loadStudentDashboard);
+window.addEventListener("DOMContentLoaded", () => {
+    loadStudentDashboard();
+});
 
 function loadStudentDashboard() {
     const ref = doc(db, "students", activeStudentId);
@@ -25,89 +27,166 @@ function loadStudentDashboard() {
         setText("studentStatus", data.enrollmentStatus);
         setText("studentId", data.studentId);
         setText("studentTrack", String(data.track || "N/A").toUpperCase());
+        setText("studentEmail", data.email);
+        setText("studentRegDate", formatDate(data.registrationDate));
 
         const pending = data.enrollmentStatus === "PENDING APPLICATION";
-
-        ["nav-dashboard", "nav-schedule", "nav-grades"].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = pending ? "none" : "block";
-        });
+        togglePortalSections(!pending);
 
         const notice = document.getElementById("homeNotice");
-        if (notice && pending) {
-            notice.innerHTML = `
-            <strong>Application Status:</strong><br>
-            Your application is currently under review.
-            `;
+        if (notice) {
+            notice.innerHTML = pending
+                ? `<strong>Application Status:</strong> Your application is currently under review. Please wait for the admin to verify your records.`
+                : `<strong>Portal Update:</strong> Your account is active. You can now view your schedule and academic grades.`;
         }
 
         fillProfile(data);
         renderGrades(data.grades);
         renderSchedule(data.schedule);
+    }, (error) => {
+        console.error("Firestore listener error:", error);
+        alert("Unable to load your dashboard data.");
     });
 }
 
+function togglePortalSections(isActive) {
+    ["nav-dashboard", "nav-schedule", "nav-grades"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isActive ? "block" : "none";
+    });
+
+    if (!isActive) {
+        const dashboardSection = document.getElementById("dashboard");
+        if (dashboardSection) dashboardSection.style.display = "none";
+        const scheduleSection = document.getElementById("schedule");
+        if (scheduleSection) scheduleSection.style.display = "none";
+        const gradesSection = document.getElementById("grades");
+        if (gradesSection) gradesSection.style.display = "none";
+        showSection("home");
+    }
+}
+
 function renderGrades(grades) {
-    const table = document.getElementById("reportCardContent");
-    if (!table || !grades) return;
+    const tableBody = document.getElementById("reportCardContent");
+    if (!tableBody) return;
 
-    table.innerHTML = "";
+    const entries = grades ? Object.entries(grades) : [];
+    tableBody.innerHTML = "";
 
-    Object.entries(grades).forEach(([subject, grade]) => {
-        table.innerHTML += `
-        <tr>
-            <td>${subject}</td>
-            <td>${grade}</td>
-        </tr>`;
+    if (!entries.length) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="2"><div class="empty-state">No grades available yet.</div></td>
+            </tr>`;
+        return;
+    }
+
+    entries.forEach(([subject, grade]) => {
+        const tr = document.createElement("tr");
+
+        const subjectTd = document.createElement("td");
+        subjectTd.textContent = subject;
+
+        const gradeTd = document.createElement("td");
+        gradeTd.className = "grade-value";
+        gradeTd.textContent = grade;
+        if (String(grade).toUpperCase() === "N/A") {
+            gradeTd.classList.add("grade-na");
+        }
+
+        tr.appendChild(subjectTd);
+        tr.appendChild(gradeTd);
+        tableBody.appendChild(tr);
     });
 }
 
 function renderSchedule(schedule) {
-    const box = document.getElementById("scheduleContent");
-    if (!box || !schedule) return;
+    const tableBody = document.getElementById("scheduleTableBody");
+    if (!tableBody) return;
 
-    box.innerHTML = "";
+    const entries = schedule ? Object.entries(schedule) : [];
+    tableBody.innerHTML = "";
 
-    Object.entries(schedule).forEach(([day, time]) => {
-        box.innerHTML += `
-        <div class="schedule-row">
-            <strong>${day}</strong><br>
-            ${time}
-        </div>`;
+    if (!entries.length) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="2"><div class="empty-state">No schedule available yet.</div></td>
+            </tr>`;
+        return;
+    }
+
+    entries.forEach(([day, time]) => {
+        const tr = document.createElement("tr");
+
+        const dayTd = document.createElement("td");
+        dayTd.textContent = day;
+
+        const timeTd = document.createElement("td");
+        timeTd.textContent = time;
+
+        tr.appendChild(dayTd);
+        tr.appendChild(timeTd);
+        tableBody.appendChild(tr);
     });
 }
 
 function fillProfile(data) {
-    const fields = ["firstName","middleName","lastName","address","contact"];
+    const mappings = {
+        profileFirstName: data.firstName || "",
+        profileMiddleName: data.middleName || "",
+        profileLastName: data.lastName || "",
+        profileAddress: data.address || "",
+        profileContact: data.contact || ""
+    };
 
-    fields.forEach(field => {
-        const el = document.getElementById("profile" + field.charAt(0).toUpperCase() + field.slice(1));
-        if (el) el.value = data[field] || "";
+    Object.entries(mappings).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
     });
 }
 
-function setText(id,value){
-    const el=document.getElementById(id);
-    if(el) el.textContent=value || "N/A";
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value || "N/A";
 }
 
-window.saveProfile = async function(event){
+function formatDate(value) {
+    if (!value) return "N/A";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+
+    return date.toLocaleString("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+window.saveProfile = async function (event) {
     event.preventDefault();
 
-    const ref = doc(db,"students",activeStudentId);
+    try {
+        const ref = doc(db, "students", activeStudentId);
 
-    await updateDoc(ref,{
-        firstName: document.getElementById("profileFirstName").value,
-        middleName: document.getElementById("profileMiddleName").value,
-        lastName: document.getElementById("profileLastName").value,
-        address: document.getElementById("profileAddress").value,
-        contact: document.getElementById("profileContact").value
-    });
+        await updateDoc(ref, {
+            firstName: document.getElementById("profileFirstName")?.value || "",
+            middleName: document.getElementById("profileMiddleName")?.value || "",
+            lastName: document.getElementById("profileLastName")?.value || "",
+            address: document.getElementById("profileAddress")?.value || "",
+            contact: document.getElementById("profileContact")?.value || ""
+        });
 
-    alert("Profile updated!");
+        alert("Profile updated!");
+    } catch (error) {
+        console.error("Profile update failed:", error);
+        alert("Failed to update profile.");
+    }
 };
 
-window.handleLogout=function(){
+window.handleLogout = function () {
     sessionStorage.removeItem("loggedStudentId");
-    location.href="login.html";
+    location.href = "login.html";
 };
